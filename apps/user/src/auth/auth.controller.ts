@@ -1,5 +1,14 @@
 import { Public } from '@app/core/decorators/public.decorator';
-import { Body, Controller, Get, Param, Post, Put, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { LoginAuthDto } from './dtos/login.dto';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
