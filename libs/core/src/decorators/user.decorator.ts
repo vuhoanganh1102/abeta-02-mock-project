@@ -1,10 +1,8 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
+import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 
-export const UserData = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest<Request>();
-
-    return (request as any).payload;
+export const AuthUser = createParamDecorator(
+  (data: unknown, context: ExecutionContext) => {
+    const req = context.switchToHttp().getRequest();
+    return req.payload;
   },
 );
