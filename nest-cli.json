@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/mock-project/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/mock-project/tsconfig.app.json"
+  },
+  "projects": {
+    "core": {
+      "type": "library",
+      "root": "libs/core",
+      "entryFile": "index",
+      "sourceRoot": "libs/core/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/core/tsconfig.lib.json"
+      }
+    },
+    "config": {
+      "type": "library",
+      "root": "libs/config",
+      "entryFile": "index",
+      "sourceRoot": "libs/config/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/config/tsconfig.lib.json"
+      }
+    },
+    "database-type-orm": {
+      "type": "library",
+      "root": "libs/database-type-orm",
+      "entryFile": "index",
+      "sourceRoot": "libs/database-type-orm/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/database-type-orm/tsconfig.lib.json"
+      }
+    },
+    "helpers": {
+      "type": "library",
+      "root": "libs/helpers",
+      "entryFile": "index",
+      "sourceRoot": "libs/helpers/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/helpers/tsconfig.lib.json"
+      }
+    },
+    "jwt-authentication": {
+      "type": "library",
+      "root": "libs/jwt-authentication",
+      "entryFile": "index",
+      "sourceRoot": "libs/jwt-authentication/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/jwt-authentication/tsconfig.lib.json"
+      }
+    },
+    "mock-project": {
+      "type": "application",
+      "root": "apps/mock-project",
+      "entryFile": "main",
+      "sourceRoot": "apps/mock-project/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/mock-project/tsconfig.app.json"
+      }
+    },
+    "admin": {
+      "type": "application",
+      "root": "apps/admin",
+      "entryFile": "main",
+      "sourceRoot": "apps/admin/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/admin/tsconfig.app.json"
+      }
+    },
+    "user": {
+      "type": "application",
+      "root": "apps/user",
+      "entryFile": "main",
+      "sourceRoot": "apps/user/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user/tsconfig.app.json"
+      }
+    },
+    "sendgrid": {
+      "type": "library",
+      "root": "libs/sendgrid",
+      "entryFile": "index",
+      "sourceRoot": "libs/sendgrid/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/sendgrid/tsconfig.lib.json"
+      }
+    },
+    "firebase-upload": {
+      "type": "library",
+      "root": "libs/firebase-upload",
+      "entryFile": "index",
+      "sourceRoot": "libs/firebase-upload/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/firebase-upload/tsconfig.lib.json"
+      }
+    }
+  },
+  "monorepo": true,
+  "root": "apps/mock-project"
+}
