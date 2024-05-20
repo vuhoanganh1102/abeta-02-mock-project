@@ -16,6 +16,50 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@app/core": [
+        "libs/core/src"
+      ],
+      "@app/core/*": [
+        "libs/core/src/*"
+      ],
+      "@app/config": [
+        "libs/config/src"
+      ],
+      "@app/config/*": [
+        "libs/config/src/*"
+      ],
+      "@app/database-type-orm": [
+        "libs/database-type-orm/src"
+      ],
+      "@app/database-type-orm/*": [
+        "libs/database-type-orm/src/*"
+      ],
+      "@app/helpers": [
+        "libs/helpers/src"
+      ],
+      "@app/helpers/*": [
+        "libs/helpers/src/*"
+      ],
+      "@app/jwt-authentication": [
+        "libs/jwt-authentication/src"
+      ],
+      "@app/jwt-authentication/*": [
+        "libs/jwt-authentication/src/*"
+      ],
+      "@app/sendgrid": [
+        "libs/sendgrid/src"
+      ],
+      "@app/sendgrid/*": [
+        "libs/sendgrid/src/*"
+      ],
+      "@app/firebase-upload": [
+        "libs/firebase-upload/src"
+      ],
+      "@app/firebase-upload/*": [
+        "libs/firebase-upload/src/*"
+      ]
+    }
   }
 }
