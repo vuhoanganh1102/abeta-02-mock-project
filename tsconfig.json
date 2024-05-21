@@ -59,6 +59,12 @@
       ],
       "@app/firebase-upload/*": [
         "libs/firebase-upload/src/*"
+      ],
+      "@app/send-mail-ha": [
+        "libs/send-mail-ha/src"
+      ],
+      "@app/send-mail-ha/*": [
+        "libs/send-mail-ha/src/*"
       ]
     }
   }

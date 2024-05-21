@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AdminModule } from '../../admin/src/admin.module';
 import { UserModule } from '../../user/src/user.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import config, { IConfig, IConfigAuth, IConfigSendGrid } from './config';
@@ -9,6 +8,8 @@ import { JwtAuthenticationModule } from '@app/jwt-authentication';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSource } from '@app/database-type-orm/data-source';
 import { SendgridModule } from '@app/sendgrid';
+import { AdminModule } from './admin/admin.module';
+// import { SendMailService } from '@app/send-mail-ha';
 
 @Module({
   imports: [

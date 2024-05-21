@@ -62,15 +62,6 @@
         "tsConfigPath": "apps/mock-project/tsconfig.app.json"
       }
     },
-    "admin": {
-      "type": "application",
-      "root": "apps/admin",
-      "entryFile": "main",
-      "sourceRoot": "apps/admin/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/admin/tsconfig.app.json"
-      }
-    },
     "user": {
       "type": "application",
       "root": "apps/user",
@@ -96,6 +87,15 @@
       "sourceRoot": "libs/firebase-upload/src",
       "compilerOptions": {
         "tsConfigPath": "libs/firebase-upload/tsconfig.lib.json"
+      }
+    },
+    "admin": {
+      "type": "application",
+      "root": "apps/admin",
+      "entryFile": "main",
+      "sourceRoot": "apps/admin/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/admin/tsconfig.app.json"
       }
     }
   },

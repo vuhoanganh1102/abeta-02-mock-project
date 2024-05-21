@@ -1,12 +1,22 @@
 /* eslint-disable prettier/prettier */
-import { Unauthorized } from '@app/core/exception';
-import { Inject, Injectable } from '@nestjs/common';
-import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
+import { Exception, Unauthorized } from '@app/core/exception';
+import {
+  // Inject,
+  Injectable,
+} from '@nestjs/common';
+import {
+  JwtService,
+  //  JwtVerifyOptions
+} from '@nestjs/jwt';
 import { Request } from 'express';
-import { JwtAuthenticationModuleOptions } from './jwt-authentication.interface';
-import { MODULE_OPTIONS_TOKEN } from './jwt-authentication.module-definition';
+// import { JwtAuthenticationModuleOptions } from './jwt-authentication.interface';
+// import { MODULE_OPTIONS_TOKEN } from './jwt-authentication.module-definition';
 import { LiteralObject } from '@nestjs/common/cache';
-import { decode } from 'punycode';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from '@app/database-type-orm/entities/User.entity';
+
+import { Repository } from 'typeorm';
+import { ErrorCode } from '@app/core/constants/enum';
 
 @Injectable()
 export class JwtAuthenticationService {
@@ -14,11 +24,14 @@ export class JwtAuthenticationService {
     private readonly jwtService: JwtService,
     // @Inject(MODULE_OPTIONS_TOKEN)
     // public options: JwtAuthenticationModuleOptions,
+
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async validateRequest(request: Request) {
     const token = this.extractFromAuthHeaderAsBearerToken(request);
-
+    console.log(token);
     try {
       const decoded = this.jwtService.verify<LiteralObject>(token, {
         secret: process.env.JWT_SECRET_KEY,
@@ -26,7 +39,7 @@ export class JwtAuthenticationService {
       });
 
       Object.assign(request, { payload: decoded });
-      // request['user'] = decoded;
+
       return true;
     } catch (error) {
       throw new Unauthorized(
@@ -75,6 +88,25 @@ export class JwtAuthenticationService {
       return payload;
     } catch (error) {
       return false;
+    }
+  }
+
+  async validateAdminRequest(request: Request) {
+    const token = this.extractFromAuthHeaderAsBearerToken(request);
+
+    try {
+      const decoded = this.jwtService.verify<LiteralObject>(token, {
+        secret: process.env.JWT_SECRET_KEY,
+        algorithms: ['HS256'],
+      });
+
+      Object.assign(request, { payload: decoded });
+
+      if (decoded.role === 'isAdmin') return true;
+    } catch (error) {
+      throw new Unauthorized(
+        "Your authorization token isn't valid. Please login again!",
+      );
     }
   }
 }

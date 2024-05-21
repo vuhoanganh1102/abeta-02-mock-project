@@ -7,6 +7,7 @@ export enum ErrorCode {
   Forbidden_Resource = 'Forbidden_Resource',
   Unauthorized = 'Unauthorized',
   Too_Many_Requests = 'Too_Many_Requests',
+  Not_Found_Data = 'Not_Found_Data',
 
   Email_Already_Exist = 'Email_Already_Exist',
   Email_Or_Password_Not_valid = 'Email_Or_Password_Not_valid',
