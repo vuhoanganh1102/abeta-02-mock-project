@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {EmailOtp} from "@app/database-type-orm/entities/EmailOtp.entity";
+import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, EmailOtp])],

@@ -3,16 +3,16 @@ import { LoginAuthDto } from './dtos/login.dto';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Exception } from '@app/core/exception';
-import {ErrorCode, IsCurrent, OTPCategory} from '@app/core/constants/enum';
+import { ErrorCode, IsCurrent, OTPCategory } from '@app/core/constants/enum';
 import * as bcrypt from 'bcrypt';
 import { JwtAuthenticationService } from '@app/jwt-authentication';
 import { ChangePasswordDto } from './dtos/changePassword.dto';
 import { ForgetPasswordDto } from './dtos/forgetPassword.dto';
 import { SendgridService } from '@app/sendgrid';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
-import {addMinutes, format, subMinutes} from "date-fns";
-import {EmailOtp} from "@app/database-type-orm/entities/EmailOtp.entity";
-import process from "process";
+import { addMinutes, format, subMinutes } from 'date-fns';
+import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
+import process from 'process';
 
 export class AuthService {
   constructor(
@@ -73,7 +73,7 @@ export class AuthService {
     if (!user) {
       throw new Exception(ErrorCode.User_Not_Found, 'User Not Found');
     }
-    await this.sendOtp(user, OTPCategory.FORGET_PASSWORD)
+    await this.sendOtp(user, OTPCategory.FORGET_PASSWORD);
     return {
       message: 'Check your email',
     };
@@ -86,7 +86,7 @@ export class AuthService {
       },
       select: {
         userId: true,
-      }
+      },
     });
     if (!otp) {
       throw new Exception(ErrorCode.OTP_Invalid);
@@ -154,23 +154,23 @@ export class AuthService {
     const fiveMinutesAgo = subMinutes(new Date(), 5);
     const maxOtpInFiveMins = 5;
     const otpCountLastFiveMins = await this.otpRepository
-        .createQueryBuilder('otp')
-        .where('otp.userId = :userId', { userId: user.id })
-        .andWhere('otp.createdAt > :fiveMinutesAgo', { fiveMinutesAgo })
-        .getCount();
+      .createQueryBuilder('otp')
+      .where('otp.userId = :userId', { userId: user.id })
+      .andWhere('otp.createdAt > :fiveMinutesAgo', { fiveMinutesAgo })
+      .getCount();
     if (otpCountLastFiveMins >= maxOtpInFiveMins) {
       throw new Exception(ErrorCode.Too_Many_Requests);
     }
     //get current otp of user in data
     const otpRecord = await this.otpRepository
-        .createQueryBuilder('otp')
-        .where('otp.userId = :userId', { userId: user.id })
-        .andWhere('otp.isCurrent = :isCurrent', {
-          isCurrent: IsCurrent.IS_CURRENT,
-        })
-        .andWhere('otp.otpCategory = :otpType', { otpType: otpType })
-        .andWhere('otp.expiredAt > :now', { now: new Date() })
-        .getOne();
+      .createQueryBuilder('otp')
+      .where('otp.userId = :userId', { userId: user.id })
+      .andWhere('otp.isCurrent = :isCurrent', {
+        isCurrent: IsCurrent.IS_CURRENT,
+      })
+      .andWhere('otp.otpCategory = :otpType', { otpType: otpType })
+      .andWhere('otp.expiredAt > :now', { now: new Date() })
+      .getOne();
 
     //change current status for that otp
     if (otpRecord) {
@@ -179,9 +179,12 @@ export class AuthService {
     }
 
     //create new otp
-    const forgetOtp = this.generateRandomResetToken()
+    const forgetOtp = this.generateRandomResetToken();
     const resetLink = process.env.RESET_LINK;
-    const expiredAt = addMinutes(new Date(), parseInt(process.env.OTP_EXPIRY_TIME));
+    const expiredAt = addMinutes(
+      new Date(),
+      parseInt(process.env.OTP_EXPIRY_TIME),
+    );
 
     const expiredAtString = format(expiredAt, 'yyyy-MM-dd HH:mm:ss');
     const newOtp = this.otpRepository.create({
@@ -197,12 +200,12 @@ export class AuthService {
 
     //send
     await this.sendGridService.sendMail(
-        user.email,
-        otpType === OTPCategory.REGISTER
-            ? 'Verify Your Account'
-            : 'Reset Your Password',
-        otpType === OTPCategory.REGISTER ? './verify' : './reset-password',
-        { resetLink },
+      user.email,
+      otpType === OTPCategory.REGISTER
+        ? 'Verify Your Account'
+        : 'Reset Your Password',
+      otpType === OTPCategory.REGISTER ? './verify' : './reset-password',
+      { resetLink },
     );
     return {
       message: 'Check your email',

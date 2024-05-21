@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigurableModuleClass } from './jwt-authentication.module-definition';
 import { JwtAuthenticationService } from './jwt-authentication.service';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthenticationGuard } from './jwt-authentication.guard';
+import { UserGuard } from './user.guard';
 @Global()
 @Module({
   imports: [JwtModule],
@@ -11,7 +11,7 @@ import { JwtAuthenticationGuard } from './jwt-authentication.guard';
     JwtAuthenticationService,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthenticationGuard,
+      useClass: UserGuard,
     },
   ],
   exports: [JwtAuthenticationService],
