@@ -137,3 +137,18 @@ export enum QueueName {
   ADMIN_PUSH_NOTIFICATION_ALL_MEMBERS = 'ADMIN_PUSH_NOTIFICATION_ALL_MEMBERS',
   PUSH_NOTIFICATION_WITH_PLAYER_ID = 'PUSH_NOTIFICATION_WITH_PLAYER_ID',
 }
+
+export enum VerifiedStatus {
+  NOT_VERIFIED = 0,
+  VERIFIED = 1,
+}
+
+export enum IsCurrent {
+  IS_OLD = 0,
+  IS_CURRENT = 1,
+}
+
+export enum OTPCategory {
+  REGISTER = 0,
+  FORGET_PASSWORD = 1,
+}
