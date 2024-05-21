@@ -5,7 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
+import { Attendance } from './Attendance.entity';
+import { VerifiedStatus } from '../../../core/src/constants/enum';
+import { EmailOtp } from './EmailOtp.entity';
+import { UserNotification } from './UserNotification.entity';
 
 @Entity('user')
 export class User {
@@ -55,8 +61,36 @@ export class User {
   @Column({ name: 'reset_token', type: 'varchar', length: 500, nullable: true })
   resetToken: string;
 
-  @Column({ name: 'is_verify', type: 'tinyint', default: 0 })
+  @Column({
+    name: 'is_verify',
+    type: 'tinyint',
+    default: VerifiedStatus.NOT_VERIFIED,
+  })
   isVerified: number;
+
+  @OneToMany(() => Attendance, (attendance) => attendance.user)
+  @JoinColumn({ name: 'attendance_id' })
+  attendances: Attendance[];
+
+  @Column({ name: 'attendance_id', type: 'bigint', unsigned: true })
+  attendanceId: number;
+
+  @OneToMany(
+    () => UserNotification,
+    (user_notification) => user_notification.user,
+  )
+  @JoinColumn({ name: 'notification_id' })
+  user_notifications: UserNotification[];
+
+  @Column({ name: 'notification_id', type: 'bigint', unsigned: true })
+  notificationId: number;
+
+  @OneToMany(() => EmailOtp, (otp) => otp.user)
+  @JoinColumn({ name: 'otp_id' })
+  otp: EmailOtp[];
+
+  @Column({ name: 'otp_id', type: 'bigint', unsigned: true })
+  optId: number;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;

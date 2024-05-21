@@ -46,6 +46,9 @@ export enum ErrorCode {
   Post_Not_Found = 'Post_Not_Found',
   Comment_Not_Found = 'Comment_Not_Found',
   Notification_Not_Found = 'Notification_Not_Found',
+  CheckOut_Already_Exists = 'CheckOut_Already_Exists',
+  Attendance_Not_Found = 'Attendance_Not_Found',
+  Exceeded_Time_Attendance = 'Exceeded_Time_Attendance',
 }
 
 export enum Environment {
@@ -70,6 +73,13 @@ export enum CommonStatus {
   INACTIVE = 0,
   ACTIVE = 1,
   NOT_VERIFY = 2,
+  REJECT = 3,
+}
+
+export enum AttendanceStatus {
+  DELETED = 0,
+  ACTIVE = 1,
+  PENDING = 2,
   REJECT = 3,
 }
 
@@ -136,4 +146,19 @@ export enum QueueName {
   PUSH_NOTIFICATION = 'PUSH_NOTIFICATION',
   ADMIN_PUSH_NOTIFICATION_ALL_MEMBERS = 'ADMIN_PUSH_NOTIFICATION_ALL_MEMBERS',
   PUSH_NOTIFICATION_WITH_PLAYER_ID = 'PUSH_NOTIFICATION_WITH_PLAYER_ID',
+}
+
+export enum VerifiedStatus {
+  NOT_VERIFIED = 0,
+  VERIFIED = 1,
+}
+
+export enum IsCurrent {
+  IS_OLD = 0,
+  IS_CURRENT = 1,
+}
+
+export enum OTPCategory {
+  REGISTER = 0,
+  FORGET_PASSWORD = 1,
 }

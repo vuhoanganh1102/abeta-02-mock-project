@@ -23,17 +23,21 @@ export class SendgridService {
     attachedData?: any,
     html?: string,
   ) {
-    // const templatePath = path.join(
-    //   __dirname,
-    //   '..',
-    //   'libs',
-    //   'sendgrid',
-    //   'src',
-    //   'templates',
-    //   `${templateName}.ejs`,
-    // );
-    // const template = await readFile(templatePath, 'utf-8');
-    // html = ejs.render(template, attachedData || {});
+    const templatePath = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      'libs',
+      'sendgrid',
+      'src',
+      'templates',
+      `${templateName}.ejs`,
+    );
+    console.log(templatePath);
+    const template = await readFile(templatePath, 'utf-8');
+    html = ejs.render(template, attachedData || {});
+    console.log(html);
     const mail = {
       from: this.options.sender,
       to: receiver,

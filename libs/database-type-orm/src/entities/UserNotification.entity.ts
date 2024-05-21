@@ -5,36 +5,30 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
-  OneToMany,
+  ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { User } from './User.entity';
 import { Notification } from './Notification.entity';
 
-@Entity('admin')
-export class Admin {
+@Entity()
+export class UserNotification {
   @PrimaryGeneratedColumn({ name: 'id', type: 'bigint', unsigned: true })
   id: number;
 
-  @Column({ name: 'email', type: 'varchar', length: 255, unique: true })
-  email: string;
+  @ManyToOne(() => User, (user) => user.user_notifications)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
-  @Column({ name: 'password', type: 'varchar', length: 255 })
-  password: string;
+  @Column({ name: 'user_id', type: 'bigint', unsigned: true })
+  userId: number;
 
-  @Column({
-    name: 'refresh_token',
-    type: 'varchar',
-    length: 500,
-    nullable: true,
-  })
-  refreshToken: string;
-
-  @Column({ name: 'reset_token', type: 'varchar', length: 500, nullable: true })
-  resetToken: string;
-
-  @OneToMany(() => Notification, (notification) => notification.admin)
+  @ManyToOne(
+    () => Notification,
+    (notification) => notification.userNotifications,
+  )
   @JoinColumn({ name: 'notification_id' })
-  notifications: Notification[];
+  notification: Notification;
 
   @Column({ name: 'notification_id', type: 'bigint', unsigned: true })
   notificationId: number;
