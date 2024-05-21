@@ -71,15 +71,6 @@
         "tsConfigPath": "apps/user/tsconfig.app.json"
       }
     },
-    "sendgrid": {
-      "type": "library",
-      "root": "libs/sendgrid",
-      "entryFile": "index",
-      "sourceRoot": "libs/sendgrid/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/sendgrid/tsconfig.lib.json"
-      }
-    },
     "firebase-upload": {
       "type": "library",
       "root": "libs/firebase-upload",
@@ -96,6 +87,15 @@
       "sourceRoot": "apps/admin/src",
       "compilerOptions": {
         "tsConfigPath": "apps/admin/tsconfig.app.json"
+      }
+    },
+    "sendgrid": {
+      "type": "library",
+      "root": "libs/sendgrid",
+      "entryFile": "index",
+      "sourceRoot": "libs/sendgrid/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/sendgrid/tsconfig.lib.json"
       }
     }
   },

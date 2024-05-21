@@ -5,12 +5,11 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { IConfig } from './config';
+import { IConfig } from '../../admin/src/config';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
-
   app.set('trust proxy', 1);
   app.useLogger(new CustomLogger());
   const configService: ConfigService<IConfig> = app.get(ConfigService);

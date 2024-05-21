@@ -49,9 +49,11 @@
         "libs/jwt-authentication/src/*"
       ],
       "@app/sendgrid": [
+        "libs/sendgrid/src",
         "libs/sendgrid/src"
       ],
       "@app/sendgrid/*": [
+        "libs/sendgrid/src/*",
         "libs/sendgrid/src/*"
       ],
       "@app/firebase-upload": [

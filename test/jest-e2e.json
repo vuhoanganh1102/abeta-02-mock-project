@@ -12,6 +12,8 @@
   },
   "moduleNameMapper": {
     "@app/send-mail-ha/(.*)": "<rootDir>/../libs/send-mail-ha/src/$1",
-    "@app/send-mail-ha": "<rootDir>/../libs/send-mail-ha/src"
+    "@app/send-mail-ha": "<rootDir>/../libs/send-mail-ha/src",
+    "@app/sendgrid/(.*)": "<rootDir>/../libs/sendgrid/src/$1",
+    "@app/sendgrid": "<rootDir>/../libs/sendgrid/src"
   }
 }
