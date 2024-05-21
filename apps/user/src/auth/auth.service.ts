@@ -10,7 +10,9 @@ import { ChangePasswordDto } from './dtos/changePassword.dto';
 import { ForgetPasswordDto } from './dtos/forgetPassword.dto';
 import { SendgridService } from '@app/sendgrid';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
