@@ -34,14 +34,15 @@ export class SendgridService {
       'templates',
       `${templateName}.ejs`,
     );
-    console.log(templatePath)
+    console.log(templatePath);
     const template = await readFile(templatePath, 'utf-8');
     html = ejs.render(template, attachedData || {});
-    console.log(html)
+    console.log(html);
     const mail = {
       from: this.options.sender,
       to: receiver,
       subject: subject,
+      text: attachedData,
       html: html,
     };
     try {
