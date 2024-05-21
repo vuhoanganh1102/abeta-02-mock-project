@@ -76,6 +76,13 @@ export enum CommonStatus {
   REJECT = 3,
 }
 
+export enum AttendanceStatus {
+  DELETED = 0,
+  ACTIVE = 1,
+  PENDING = 2,
+  REJECT = 3,
+}
+
 export enum Permissions {
   PERMISSION_MANAGEMENT = 1,
   CONFIG_MANAGEMENT = 2,

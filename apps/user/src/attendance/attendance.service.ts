@@ -1,4 +1,4 @@
-import { ErrorCode } from '@app/core/constants/enum';
+import { AttendanceStatus, ErrorCode } from '@app/core/constants/enum';
 import { Exception } from '@app/core/exception';
 import { Attendance } from '@app/database-type-orm/entities/Attendance.entity';
 import { CompanyConfig } from '@app/database-type-orm/entities/CompanyConfig.entity';
@@ -59,6 +59,7 @@ export class AttendanceService {
         date: date,
         checkIn: checkIn,
         lateTime: lateTime,
+        status: AttendanceStatus.PENDING,
       });
 
       return {
@@ -69,7 +70,7 @@ export class AttendanceService {
       };
     }
 
-    if (attendance && !attendance.checkOut) {
+    if (attendance && attendance.status === AttendanceStatus.PENDING) {
       const checkOut = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
 
       const workHoursMorning = this.calculateTimeToHours(
@@ -98,6 +99,7 @@ export class AttendanceService {
         userId: userId,
         checkOut: checkOut,
         workHours: workHours,
+        status: AttendanceStatus.ACTIVE,
       });
 
       return {
@@ -121,7 +123,21 @@ export class AttendanceService {
     userId: number,
     attendanceRequestDto: AttendanceRequestDto,
   ) {
-    console.log(userId, attendanceRequestDto);
+    const attendance = await this.attendanceRepository.findOne({
+      where: {
+        userId: userId,
+        date: attendanceRequestDto.date,
+        status: AttendanceStatus.PENDING,
+      },
+    });
+
+    if (!attendance) throw new Exception(ErrorCode.Attendance_Not_Found);
+    await this.attendanceRepository.update(attendance.id, {
+      checkIn: attendanceRequestDto.checkIn,
+      checkOut: attendanceRequestDto.checkOut,
+      status: AttendanceStatus.PENDING,
+    });
+
     return { message: 'success' };
   }
 
