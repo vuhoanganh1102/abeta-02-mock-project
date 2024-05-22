@@ -1,9 +1,17 @@
-import {Body, Controller, Get, Patch, Post, UploadedFile, UseInterceptors} from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { AuthUser } from '@app/core/decorators/user.decorator';
 import { UpdateProfileDto } from './dtos/updateProfile.dto';
-import {ApiBearerAuth, ApiBody, ApiConsumes, ApiTags} from "@nestjs/swagger";
-import {FileInterceptor} from "@nestjs/platform-express";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiBearerAuth()
 @ApiTags('Profile')
@@ -36,8 +44,8 @@ export class ProfileController {
   })
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(
-      @UploadedFile() file: Express.Multer.File,
-      @AuthUser() { id },
+    @UploadedFile() file: Express.Multer.File,
+    @AuthUser() { id },
   ) {
     const imageUrl = await this.profileService.uploadAvatar(file, id);
     return {

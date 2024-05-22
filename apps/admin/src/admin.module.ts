@@ -1,10 +1,68 @@
 import { Module } from '@nestjs/common';
-import { AdminController } from './admin.controller';
-import { AdminService } from './admin.service';
-
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import config, { IConfig, IConfigAuth, IConfigSendGrid } from './config';
+import { JwtAuthenticationModule, UserGuard } from '@app/jwt-authentication';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { dataSource } from '@app/database-type-orm/data-source';
+import { SendgridModule } from '@app/sendgrid';
+// import { SendMailService } from '@app/send-mail-ha';
+import { Admin } from '@app/database-type-orm/entities/Admin.entity';
+import { User } from '@app/database-type-orm/entities/User.entity';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
+import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
+import { AdminGuard } from '@app/jwt-authentication/admin.guard';
+import { AuthModule } from './auth/auth.module';
 @Module({
-  imports: [],
-  controllers: [AdminController],
-  providers: [AdminService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [() => config],
+      cache: true,
+      // validate: validateConfig,
+    }),
+    JwtAuthenticationModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService<IConfig, true>) => ({
+        ...configService.get<IConfigAuth>('auth'),
+      }),
+      inject: [ConfigService],
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService<IConfig, true>) => ({
+        ...configService.get('typeORMOptions'),
+        entities: [Admin],
+      }),
+      dataSourceFactory: async () => {
+        return await dataSource.initialize();
+      },
+      inject: [ConfigService],
+    }),
+    TypeOrmModule.forFeature([Admin, User]),
+    SendgridModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService<IConfig, true>) => ({
+        ...configService.get<IConfigSendGrid>('sendGrid'),
+      }),
+      inject: [ConfigService],
+    }),
+    AuthModule,
+  ],
+  controllers: [],
+  providers: [
+    //     {
+    //   provide: APP_GUARD,
+    //   useClass: AdminGuard,
+    // },
+    //   {
+    //     provide: APP_FILTER,
+    //     useClass: AllExceptionsFilter,
+    //   },
+    //   {
+    //     provide: APP_INTERCEPTOR,
+    //     useClass: TransformResponseInterceptor,
+    //   },
+  ],
 })
 export class AdminModule {}

@@ -5,10 +5,9 @@ import * as firebase from 'firebase-admin';
 export class FirebaseUploadService {
   private readonly storage: firebase.storage.Storage;
   constructor() {
+    const serviceAccount = require('./serviceAccountKey.json');
     firebase.initializeApp({
-      credential: firebase.credential.cert(
-        process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
-      ),
+      credential: firebase.credential.cert(serviceAccount),
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
     });
     this.storage = firebase.storage();
