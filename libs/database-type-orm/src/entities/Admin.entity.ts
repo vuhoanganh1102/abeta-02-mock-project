@@ -33,11 +33,7 @@ export class Admin {
   resetToken: string;
 
   @OneToMany(() => Notification, (notification) => notification.admin)
-  @JoinColumn({ name: 'notification_id' })
   notifications: Notification[];
-
-  @Column({ name: 'notification_id', type: 'bigint', unsigned: true })
-  notificationId: number;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;

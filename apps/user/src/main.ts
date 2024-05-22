@@ -4,8 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { IConfig } from './config';
 import { UserModule } from './user.module';
+import { IConfig } from '../../mock-project/src/config';
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(UserModule, {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
@@ -17,10 +18,10 @@ async function bootstrap() {
   const port = configService.get<number>('port', 3002);
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Title Project')
-    .setDescription('description of the project')
+    .setTitle('User Project')
+    .setDescription('description of the user project')
     .setVersion('1.0')
-    .addTag('Tags')
+    .addTag('User')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);

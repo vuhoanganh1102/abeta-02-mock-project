@@ -11,7 +11,7 @@ import { IS_PUBLIC_KEY } from './jwt-authentication.decorator';
 import { JwtAuthenticationService } from './jwt-authentication.service';
 
 @Injectable()
-export class JwtAuthenticationGuard implements CanActivate {
+export class UserGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     @Inject(JwtAuthenticationService)

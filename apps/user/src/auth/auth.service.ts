@@ -3,13 +3,16 @@ import { LoginAuthDto } from './dtos/login.dto';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Exception } from '@app/core/exception';
-import { ErrorCode } from '@app/core/constants/enum';
+import { ErrorCode, IsCurrent, OTPCategory } from '@app/core/constants/enum';
 import * as bcrypt from 'bcrypt';
 import { JwtAuthenticationService } from '@app/jwt-authentication';
 import { ChangePasswordDto } from './dtos/changePassword.dto';
 import { ForgetPasswordDto } from './dtos/forgetPassword.dto';
 import { SendgridService } from '@app/sendgrid';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
+import { addMinutes, format, subMinutes } from 'date-fns';
+import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
+import process from 'process';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -17,6 +20,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(EmailOtp)
+    private otpRepository: Repository<EmailOtp>,
     private jwtAuthService: JwtAuthenticationService,
     private sendGridService: SendgridService,
   ) {}
@@ -71,39 +76,30 @@ export class AuthService {
     if (!user) {
       throw new Exception(ErrorCode.User_Not_Found, 'User Not Found');
     }
-    const resetLink = `http://localhost:3000/reset-password?resetToken=${user.resetToken}`;
-
-    await this.sendGridService.sendMail(
-      user.email,
-      'Reset Password Request',
-      'reset-password',
-      'reset-password',
-      `<p>You requested a password reset. Click the link below to reset your password:</p>
-    <p><a href="${resetLink}">Reset Password</a></p>`,
-    );
-
+    await this.sendOtp(user, OTPCategory.FORGET_PASSWORD);
     return {
       message: 'Check your email',
     };
   }
 
   async resetPassword(resetToken, resetDto: ResetPasswordDto) {
-    const user = await this.userRepository.findOne({
+    const otp = await this.otpRepository.findOne({
       where: {
-        resetToken: resetToken,
+        otp: resetToken,
+      },
+      select: {
+        userId: true,
       },
     });
-    if (!user) {
-      throw new Exception(ErrorCode.User_Not_Found);
+    if (!otp) {
+      throw new Exception(ErrorCode.OTP_Invalid);
     }
     const hashedPassword = await bcrypt.hash(
       resetDto.password,
       parseInt(process.env.BCRYPT_HASH_ROUND),
     );
-    const resetTokenNew = this.generateRandomResetToken();
-    await this.userRepository.update(user.id, {
+    await this.userRepository.update(otp.userId, {
       password: hashedPassword,
-      resetToken: resetTokenNew,
     });
     return {
       message: 'Reset Password Successfully',
@@ -154,5 +150,68 @@ export class AuthService {
       token += characters.charAt(randomIndex);
     }
     return token;
+  }
+
+  async sendOtp(user: User, otpType: number) {
+    //check otp frequency
+    const fiveMinutesAgo = subMinutes(new Date(), 5);
+    const maxOtpInFiveMins = 5;
+    const otpCountLastFiveMins = await this.otpRepository
+      .createQueryBuilder('otp')
+      .where('otp.userId = :userId', { userId: user.id })
+      .andWhere('otp.createdAt > :fiveMinutesAgo', { fiveMinutesAgo })
+      .getCount();
+    if (otpCountLastFiveMins >= maxOtpInFiveMins) {
+      throw new Exception(ErrorCode.Too_Many_Requests);
+    }
+    //get current otp of user in data
+    const otpRecord = await this.otpRepository
+      .createQueryBuilder('otp')
+      .where('otp.userId = :userId', { userId: user.id })
+      .andWhere('otp.isCurrent = :isCurrent', {
+        isCurrent: IsCurrent.IS_CURRENT,
+      })
+      .andWhere('otp.otpCategory = :otpType', { otpType: otpType })
+      .andWhere('otp.expiredAt > :now', { now: new Date() })
+      .getOne();
+
+    //change current status for that otp
+    if (otpRecord) {
+      otpRecord.isCurrent = IsCurrent.IS_OLD;
+      await this.otpRepository.save(otpRecord);
+    }
+
+    //create new otp
+    const forgetOtp = this.generateRandomResetToken();
+    const resetLink = process.env.RESET_LINK;
+    const expiredAt = addMinutes(
+      new Date(),
+      parseInt(process.env.OTP_EXPIRY_TIME),
+    );
+
+    const expiredAtString = format(expiredAt, 'yyyy-MM-dd HH:mm:ss');
+    const newOtp = this.otpRepository.create({
+      otp: forgetOtp,
+      userId: user.id,
+      email: user.email,
+      isCurrent: IsCurrent.IS_CURRENT,
+      otpCategory: otpType,
+      expiredAt: expiredAtString,
+    });
+
+    await this.otpRepository.save(newOtp);
+
+    //send
+    await this.sendGridService.sendMail(
+      user.email,
+      otpType === OTPCategory.REGISTER
+        ? 'Verify Your Account'
+        : 'Reset Your Password',
+      otpType === OTPCategory.REGISTER ? './verify' : './reset-password',
+      { resetLink },
+    );
+    return {
+      message: 'Check your email',
+    };
   }
 }

@@ -3,16 +3,14 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import {
-  JwtAuthenticationGuard,
-  JwtAuthenticationModule,
-} from '@app/jwt-authentication';
 import config, { IConfig, IConfigAuth, IConfigSendGrid } from './config';
-import { dataSource } from '@app/database-type-orm/data-source';
-import { SendgridModule } from '@app/sendgrid';
 import { AuthModule } from './auth/auth.module';
 import { AttendanceModule } from './attendance/attendance.module';
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core/constants';
+import { ProfileModule } from './profile/profile.module';
+import { JwtAuthenticationModule, UserGuard } from '@app/jwt-authentication';
+import { dataSource } from '@app/database-type-orm/data-source';
+import { SendgridModule } from '@app/sendgrid';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
 
@@ -49,13 +47,14 @@ import { TransformResponseInterceptor } from '@app/core/interceptors/transform-r
       inject: [ConfigService],
     }),
     AuthModule,
+    ProfileModule,
     AttendanceModule,
   ],
   controllers: [UserController],
   providers: [
     {
       provide: APP_GUARD,
-      useClass: JwtAuthenticationGuard,
+      useClass: UserGuard,
     },
     {
       provide: APP_FILTER,

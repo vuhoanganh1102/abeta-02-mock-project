@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AdminModule } from '../../admin/src/admin.module';
-import { UserModule } from '../../user/src/user.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import config, { IConfig, IConfigAuth, IConfigSendGrid } from './config';
 import { JwtAuthenticationModule } from '@app/jwt-authentication';
@@ -42,8 +40,6 @@ import { SendgridModule } from '@app/sendgrid';
       }),
       inject: [ConfigService],
     }),
-    // AdminModule,
-    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
