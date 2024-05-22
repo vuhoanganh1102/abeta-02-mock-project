@@ -10,17 +10,7 @@ import { User } from '@app/database-type-orm/entities/User.entity';
 @Global()
 @Module({
   imports: [JwtModule, TypeOrmModule.forFeature([User])],
-  providers: [
-    JwtAuthenticationService,
-    {
-      provide: APP_GUARD,
-      useClass: UserGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: AdminGuard,
-    },
-  ],
+  providers: [JwtAuthenticationService],
   exports: [JwtAuthenticationService],
 })
 export class JwtAuthenticationModule extends ConfigurableModuleClass {}
