@@ -42,7 +42,7 @@ import { SendgridModule } from '@app/sendgrid';
       }),
       inject: [ConfigService],
     }),
-    AdminModule,
+    // AdminModule,
     UserModule,
   ],
   controllers: [AppController],

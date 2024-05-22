@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { format } from 'date-fns';
 import { Repository } from 'typeorm';
 import { AttendanceRequestDto } from './dtos/attendanceRequest.dto';
+import { OnesignalService } from '@app/onesignal/onesignal.service';
 
 @Injectable()
 export class AttendanceService {
@@ -18,6 +19,7 @@ export class AttendanceService {
     private attendanceRepository: Repository<Attendance>,
     @InjectRepository(CompanyConfig)
     private companyConfigRepository: Repository<CompanyConfig>,
+    private onesignalService: OnesignalService,
   ) {}
 
   private companyConfig = {
@@ -42,17 +44,21 @@ export class AttendanceService {
 
     if (!attendance) {
       const checkIn = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
-      const lateTimeMorning = this.calculateTimeToMinutes(
-        this.companyConfig.morningStartTime,
-        format(new Date(), 'HH:mm:ss'),
-      );
-
-      const lateTimeAfternoon = this.calculateTimeToMinutes(
-        this.companyConfig.morningStartTime,
-        format(new Date(), 'HH:mm:ss'),
-      );
-
-      const lateTime = Math.max(+lateTimeMorning, +lateTimeAfternoon);
+      let lateTime;
+      if (
+        this.parseTimeToSeconds(format(new Date(), 'HH:mm:ss')) <
+        this.parseTimeToSeconds(this.companyConfig.morningEndTime)
+      ) {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.morningStartTime,
+          format(new Date(), 'HH:mm:ss'),
+        );
+      } else {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.afternoonStartTime,
+          format(new Date(), 'HH:mm:ss'),
+        );
+      }
 
       await this.attendanceRepository.save({
         userId: userId,
@@ -73,28 +79,30 @@ export class AttendanceService {
     if (attendance && attendance.status === AttendanceStatus.PENDING) {
       const checkOut = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
 
-      const workHoursMorning = this.calculateTimeToHours(
-        format(attendance.checkIn, 'HH:mm:ss'),
-        this.companyConfig.morningEndTime,
-      );
-      let workHoursAfternoon;
+      let workHours;
       if (
-        this.parseTimeToSeconds(format(attendance.checkIn, 'HH:mm:ss')) >
+        this.parseTimeToSeconds(format(attendance.checkIn, 'HH:mm:ss')) <
         this.parseTimeToSeconds(this.companyConfig.morningEndTime)
       ) {
-        workHoursAfternoon = +this.calculateTimeToHours(
+        const workHoursMorning = +this.calculateTimeToHours(
           format(attendance.checkIn, 'HH:mm:ss'),
-          this.companyConfig.afternoonEndTime,
+          this.companyConfig.morningEndTime,
         );
-      } else {
-        workHoursAfternoon = +this.calculateTimeToHours(
+
+        const workHoursAfternoon = +this.calculateTimeToHours(
           this.companyConfig.afternoonStartTime,
-          this.companyConfig.afternoonEndTime,
+          format(new Date(), 'HH:mm:ss'),
         );
+
+        workHours = workHoursMorning + workHoursAfternoon;
+      } else {
+        const workHoursAfternoon = +this.calculateTimeToHours(
+          format(attendance.checkIn, 'HH:mm:ss'),
+          format(new Date(), 'HH:mm:ss'),
+        );
+
+        workHours = workHoursAfternoon;
       }
-
-      const workHours = +workHoursMorning + workHoursAfternoon;
-
       await this.attendanceRepository.update(attendance.id, {
         userId: userId,
         checkOut: checkOut,
@@ -127,15 +135,109 @@ export class AttendanceService {
       where: {
         userId: userId,
         date: attendanceRequestDto.date,
-        status: AttendanceStatus.PENDING,
+        // status: AttendanceStatus.PENDING,
       },
     });
 
-    if (!attendance) throw new Exception(ErrorCode.Attendance_Not_Found);
-    await this.attendanceRepository.update(attendance.id, {
-      checkIn: attendanceRequestDto.checkIn,
-      checkOut: attendanceRequestDto.checkOut,
-      status: AttendanceStatus.PENDING,
+    if (attendance && attendance.status !== AttendanceStatus.PENDING) {
+      throw new Exception(ErrorCode.Attendance_Not_Found);
+    }
+
+    if (!attendance) {
+      let lateTime, workHours;
+      if (
+        this.parseTimeToSeconds(
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+        ) < this.parseTimeToSeconds(this.companyConfig.morningEndTime)
+      ) {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.morningStartTime,
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+        );
+
+        const workHoursMorning = +this.calculateTimeToHours(
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+          this.companyConfig.morningEndTime,
+        );
+
+        const workHoursAfternoon = +this.calculateTimeToHours(
+          this.companyConfig.afternoonStartTime,
+          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+        );
+
+        workHours = workHoursMorning + workHoursAfternoon;
+      } else {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.afternoonStartTime,
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+        );
+        const workHoursAfternoon = +this.calculateTimeToHours(
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+        );
+
+        workHours = workHoursAfternoon;
+      }
+
+      await this.attendanceRepository.save({
+        userId: userId,
+        date: attendanceRequestDto.date,
+        checkIn: attendanceRequestDto.checkIn,
+        checkOut: attendanceRequestDto.checkOut,
+        lateTime: lateTime,
+        workHours: workHours,
+        status: AttendanceStatus.PENDING,
+      });
+    }
+
+    if (attendance && attendance.status === AttendanceStatus.PENDING) {
+      let lateTime, workHours;
+      if (
+        this.parseTimeToSeconds(
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+        ) < this.parseTimeToSeconds(this.companyConfig.morningEndTime)
+      ) {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.morningStartTime,
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+        );
+
+        const workHoursMorning = +this.calculateTimeToHours(
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+          this.companyConfig.morningEndTime,
+        );
+
+        const workHoursAfternoon = +this.calculateTimeToHours(
+          this.companyConfig.afternoonStartTime,
+          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+        );
+
+        workHours = workHoursMorning + workHoursAfternoon;
+      } else {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.afternoonStartTime,
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+        );
+        const workHoursAfternoon = +this.calculateTimeToHours(
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+        );
+
+        workHours = workHoursAfternoon;
+      }
+      await this.attendanceRepository.update(attendance.id, {
+        checkIn: attendanceRequestDto.checkIn,
+        checkOut: attendanceRequestDto.checkOut,
+        lateTime: lateTime,
+        workHours: workHours,
+        status: AttendanceStatus.PENDING,
+      });
+    }
+
+    this.onesignalService.create(userId, {
+      title: 'Yêu cầu chấm công',
+      content: 'Đã gửi yêu cầu chấm công',
+      receiverId: 1,
     });
 
     return { message: 'success' };

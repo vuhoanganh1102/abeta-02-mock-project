@@ -97,6 +97,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/firebase-upload/tsconfig.lib.json"
       }
+    },
+    "onesignal": {
+      "type": "library",
+      "root": "libs/onesignal",
+      "entryFile": "index",
+      "sourceRoot": "libs/onesignal/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/onesignal/tsconfig.lib.json"
+      }
     }
   },
   "monorepo": true,
