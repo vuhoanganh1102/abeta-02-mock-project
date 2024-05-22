@@ -26,7 +26,7 @@ export class ProfileController {
 
   @Patch('update-profile')
   updateProfile(@AuthUser() user, @Body() updateDto: UpdateProfileDto) {
-    return this.profileService.updateProfile(user, updateDto);
+    return this.profileService.updateProfile(user.id, updateDto);
   }
 
   @Post('upload-single-image')

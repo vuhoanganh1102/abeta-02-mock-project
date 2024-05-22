@@ -6,7 +6,7 @@ import { User } from '@app/database-type-orm/entities/User.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { format } from 'date-fns';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { AttendanceRequestDto } from './dtos/attendanceRequest.dto';
 import { OnesignalService } from '@app/onesignal/onesignal.service';
 
@@ -241,6 +241,21 @@ export class AttendanceService {
     });
 
     return { message: 'success' };
+  }
+
+  async getListAttendance(userId: number, month: string, year: string) {
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const startDateObj = new Date(parseInt(year), parseInt(month), 1);
+    const endDateString = startDateObj.toISOString().split('T')[0];
+
+    return await this.attendanceRepository
+      .createQueryBuilder('attendance')
+      .where('attendance.userId = :userId', { userId })
+      .andWhere('attendance.date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate: endDateString,
+      })
+      .getMany();
   }
 
   private calculateTimeToHours(startTime: string, endTime: string): string {
