@@ -1,12 +1,12 @@
-import { User } from '@app/database-type-orm/entities/User.entity';
 import { Module } from '@nestjs/common';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { ManageUserService } from './manage-user.service';
+import { ManageUserController } from './manage-user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
+import { User } from '@app/database-type-orm/entities/User.entity';
 import { SendgridModule } from '@app/sendgrid/sendgrid.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { IConfig, IConfigSendGrid } from 'apps/admin/src/config';
+import { IConfig, IConfigSendGrid } from '../config';
+import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 
 @Module({
   imports: [
@@ -19,8 +19,7 @@ import { IConfig, IConfigSendGrid } from 'apps/admin/src/config';
       inject: [ConfigService],
     }),
   ],
-  exports: [AuthService],
-  providers: [AuthService],
-  controllers: [AuthController],
+  controllers: [ManageUserController],
+  providers: [ManageUserService],
 })
-export class AuthModule {}
+export class ManageUserModule {}

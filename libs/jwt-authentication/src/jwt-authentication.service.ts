@@ -1,5 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { Exception, Unauthorized } from '@app/core/exception';
+import {
+  Exception,
+  // Exception,
+  Unauthorized,
+} from '@app/core/exception';
 import {
   // Inject,
   Injectable,
@@ -17,6 +21,7 @@ import { User } from '@app/database-type-orm/entities/User.entity';
 
 import { Repository } from 'typeorm';
 import { ErrorCode } from '@app/core/constants/enum';
+// import { ErrorCode } from '@app/core/constants/enum';
 
 @Injectable()
 export class JwtAuthenticationService {
@@ -102,7 +107,8 @@ export class JwtAuthenticationService {
 
       Object.assign(request, { payload: decoded });
 
-      if (decoded.role === 'isAdmin') return true;
+      if (decoded.role && decoded.role === 'isAdmin') return true;
+      else throw new Exception(ErrorCode.Unauthorized);
     } catch (error) {
       throw new Unauthorized(
         "Your authorization token isn't valid. Please login again!",

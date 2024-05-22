@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   OneToMany,
-  JoinColumn,
+  // JoinColumn,
 } from 'typeorm';
 import { Attendance } from './Attendance.entity';
 import { VerifiedStatus } from '../../../core/src/constants/enum';
@@ -47,7 +47,7 @@ export class User {
   })
   dateOfBirth: string;
 
-  @Column({ name: 'avatar', type: 'varchar', length: 255 })
+  @Column({ name: 'avatar', type: 'varchar', length: 255, nullable: true })
   avatar: string;
 
   @Column({

@@ -1,9 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { LoginDto } from './dtos/login.dto';
+import { LoginDto } from './dtos/Login.dto';
 import { Exception } from '@app/core/exception';
 import { ErrorCode } from '@app/core/constants/enum';
-import { UpdateUserDto } from './dtos/updateUser.entity';
-import { CreateUserDto } from './dtos/createUser.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { Repository } from 'typeorm';
@@ -26,18 +24,22 @@ export class AuthService {
         where: { email: loginDto.email },
         select: ['id', 'email', 'password', 'resetToken', 'refreshToken'],
       });
+      // kiem tra mat khau
       const checkPassword = await bcrypt.compare(
         loginDto.password,
         member.password,
       );
+
       const payload = {
         id: member.id,
         email: member.email,
         role: process.env.ADMIN_SECRET_KEY,
         resetToken: member.resetToken,
       };
+      // generate access token moi
       const access_token = await this.jwtService.generateAccessToken(payload);
 
+      // kiem tra xem ref token trong db co khong va co con han k
       if (member.refreshToken !== '') {
         const expireRefToken = await this.jwtService.verifyRefreshToken(
           member.refreshToken,
@@ -51,6 +53,7 @@ export class AuthService {
             { id: member.id },
             { refreshToken: refresh_token },
           );
+
           if (checkPassword && member.email === loginDto.email && creater) {
             // res.setHeader('Authorization', `Bearer ${access_token}`);
             return {
@@ -73,37 +76,26 @@ export class AuthService {
     }
   }
 
-  async getUsers() {
-    console.log('here');
-    try {
-      console.log(this.userRepository.find());
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   async getNewAccessToken(refreshToken: string) {
     try {
-      const checkToken = await this.jwtService.verifyRefreshToken(refreshToken);
+      const checkRefToken =
+        await this.jwtService.verifyRefreshToken(refreshToken);
 
-      if (!checkToken) {
+      if (!checkRefToken) {
         throw new Exception(ErrorCode.Token_Expired);
       } else {
-        const checkToken2 = await this.adminRepository.findOne({
-          where: { id: checkToken.id },
+        const getRefTokenInDb = await this.adminRepository.findOne({
+          where: { id: checkRefToken.id },
         });
-        // return checkToken2;
-        if (!checkToken2) {
+
+        if (!getRefTokenInDb) {
           throw new Exception(ErrorCode.Token_Not_Exist);
         } else {
-          if ((await checkToken2).refreshToken === refreshToken) {
+          if ((await getRefTokenInDb).refreshToken === refreshToken) {
             const access_token = await this.jwtService.generateAccessToken({
-              id: checkToken2.id,
-              email: checkToken2.email,
-              resetToken: checkToken2.resetToken,
+              id: getRefTokenInDb.id,
+              email: getRefTokenInDb.email,
+              resetToken: getRefTokenInDb.resetToken,
               role: process.env.ADMIN_SECRET_KEY,
             });
             return {
@@ -113,59 +105,6 @@ export class AuthService {
           throw new Exception(ErrorCode.Auth_Failed);
         }
       }
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async updateUser(id: number, updateUser: UpdateUserDto) {
-    try {
-      const updatedAt = new Date().toISOString();
-      const updater = await this.userRepository.update(
-        { id },
-        { ...updateUser, updatedAt },
-      );
-
-      return updater;
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async createUser(createUser: CreateUserDto) {}
-
-  async getDetailUser(id: number) {
-    try {
-      const find = await this.userRepository.findOne({ where: { id } });
-      if (find) return find;
-      return {
-        status: 'Not Found Data.',
-      };
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async deleteUser(id: number) {
-    try {
-      const deletedAt = new Date().toISOString();
-      const updatedAt = new Date().toISOString();
-      const update = await this.userRepository.update(
-        { id },
-        { deletedAt, updatedAt },
-      );
-
-      return update;
-      // console.log(update.affected);
     } catch (err) {
       throw new HttpException(
         'Internal Server',
