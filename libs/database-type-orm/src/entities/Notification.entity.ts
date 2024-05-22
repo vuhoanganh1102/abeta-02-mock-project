@@ -34,11 +34,7 @@ export class Notification {
     () => UserNotification,
     (userNotification) => userNotification.notification,
   )
-  @JoinColumn({ name: 'user_notification_id' })
   userNotifications: UserNotification[];
-
-  @Column({ name: 'user_notification_id', type: 'bigint', unsigned: true })
-  userNotificationId: number;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;

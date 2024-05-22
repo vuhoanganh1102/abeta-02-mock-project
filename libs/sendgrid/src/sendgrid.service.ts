@@ -42,7 +42,6 @@ export class SendgridService {
       from: this.options.sender,
       to: receiver,
       subject: subject,
-      text: attachedData,
       html: html,
     };
     try {

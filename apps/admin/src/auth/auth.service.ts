@@ -1,57 +1,39 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-// import { CreateAdminDto } from './dto/create-admin.dto';
-// import { UpdateAdminDto } from './dto/update-admin.dto';
-import { SignInDto } from './dto/signIn.dto';
+import { LoginDto } from './dtos/login.dto';
+import { Exception } from '@app/core/exception';
+import { ErrorCode } from '@app/core/constants/enum';
+import { UpdateUserDto } from './dtos/updateUser.entity';
+import { CreateUserDto } from './dtos/createUser.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { Repository } from 'typeorm';
-import { compare } from 'bcrypt';
 import { JwtAuthenticationService } from '@app/jwt-authentication';
 import { User } from '@app/database-type-orm/entities/User.entity';
-import { Exception } from '@app/core/exception';
-import { ErrorCode } from '@app/core/constants/enum';
-import { UpdateUserDto } from './dto/updateUser.entity';
-import { CreateUserDto } from './dto/createUser.entity';
 import * as bcrypt from 'bcrypt';
-// import { refreshToken } from 'firebase-admin/app';
-// import { SendMailService } from '@app/send-mail-ha';
+
 @Injectable()
-export class AdminService {
+export class AuthService {
   constructor(
     @InjectRepository(Admin)
     private readonly adminRepository: Repository<Admin>,
     private readonly jwtService: JwtAuthenticationService,
-
     @InjectRepository(User)
-    private readonly userRpository: Repository<User>,
+    private readonly userRepository: Repository<User>,
   ) {}
-  // create(createAdminDto: CreateAdminDto) {
-  //   return 'This action adds a new admin';
-  // }
-  // findAll() {
-  //   return `This action returns all admin`;
-  // }
-  // findOne(id: number) {
-  //   return `This action returns a #${id} admin`;
-  // }
-  // update(id: number, updateAdminDto: UpdateAdminDto) {
-  //   return `This action updates a #${id} admin`;
-  // }
-  // remove(id: number) {
-  //   return `This action removes a #${id} admin`;
-  // }
-
-  async signInAdmin(signInDto: SignInDto) {
+  async loginAdmin(loginDto: LoginDto) {
     try {
       const member = await this.adminRepository.findOne({
-        where: { email: signInDto.email },
+        where: { email: loginDto.email },
         select: ['id', 'email', 'password', 'resetToken', 'refreshToken'],
       });
-      const checkPassword = await compare(signInDto.password, member.password);
+      const checkPassword = await bcrypt.compare(
+        loginDto.password,
+        member.password,
+      );
       const payload = {
         id: member.id,
         email: member.email,
-        role: process.env.ADMIN_SCERET_KEY,
+        role: process.env.ADMIN_SECRET_KEY,
         resetToken: member.resetToken,
       };
       const access_token = await this.jwtService.generateAccessToken(payload);
@@ -69,7 +51,7 @@ export class AdminService {
             { id: member.id },
             { refreshToken: refresh_token },
           );
-          if (checkPassword && member.email === signInDto.email && creater) {
+          if (checkPassword && member.email === loginDto.email && creater) {
             // res.setHeader('Authorization', `Bearer ${access_token}`);
             return {
               access_token,
@@ -92,8 +74,9 @@ export class AdminService {
   }
 
   async getUsers() {
+    console.log('here');
     try {
-      return this.userRpository.find();
+      console.log(this.userRepository.find());
     } catch (err) {
       throw new HttpException(
         'Internal Server',
@@ -121,9 +104,8 @@ export class AdminService {
               id: checkToken2.id,
               email: checkToken2.email,
               resetToken: checkToken2.resetToken,
-              role: process.env.ADMIN_SCERET_KEY,
+              role: process.env.ADMIN_SECRET_KEY,
             });
-
             return {
               access_token,
             };
@@ -142,7 +124,7 @@ export class AdminService {
   async updateUser(id: number, updateUser: UpdateUserDto) {
     try {
       const updatedAt = new Date().toISOString();
-      const updater = await this.userRpository.update(
+      const updater = await this.userRepository.update(
         { id },
         { ...updateUser, updatedAt },
       );
@@ -156,29 +138,11 @@ export class AdminService {
     }
   }
 
-  async createUser(createUser: CreateUserDto) {
-    try {
-      const cre = {
-        ...createUser,
-        password: await bcrypt.hashSync(
-          createUser.password,
-          bcrypt.genSaltSync(),
-        ),
-      };
-      const creater = await this.userRpository.create(cre);
-
-      return this.userRpository.save(creater);
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
+  async createUser(createUser: CreateUserDto) {}
 
   async getDetailUser(id: number) {
     try {
-      const find = await this.userRpository.findOne({ where: { id } });
+      const find = await this.userRepository.findOne({ where: { id } });
       if (find) return find;
       return {
         status: 'Not Found Data.',
@@ -195,7 +159,7 @@ export class AdminService {
     try {
       const deletedAt = new Date().toISOString();
       const updatedAt = new Date().toISOString();
-      const update = await this.userRpository.update(
+      const update = await this.userRepository.update(
         { id },
         { deletedAt, updatedAt },
       );

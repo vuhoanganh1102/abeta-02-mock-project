@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigurableModuleClass } from './jwt-authentication.module-definition';
 import { JwtAuthenticationService } from './jwt-authentication.service';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthenticationGuard } from './jwt-authentication.guard';
+import { UserGuard } from './user.guard';
 import { AdminGuard } from './admin.guard';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@app/database-type-orm/entities/User.entity';
@@ -14,7 +14,7 @@ import { User } from '@app/database-type-orm/entities/User.entity';
     JwtAuthenticationService,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthenticationGuard,
+      useClass: UserGuard,
     },
     {
       provide: APP_GUARD,

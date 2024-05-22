@@ -18,32 +18,32 @@ import { SendgridModule } from '@app/sendgrid';
       cache: true,
       // validate: validateConfig,
     }),
-    JwtAuthenticationModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService<IConfig, true>) => ({
-        ...configService.get<IConfigAuth>('auth'),
-      }),
-      inject: [ConfigService],
-    }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService<IConfig, true>) => ({
-        ...configService.get('typeORMOptions'),
-      }),
-      dataSourceFactory: async () => {
-        return await dataSource.initialize();
-      },
-      inject: [ConfigService],
-    }),
-    SendgridModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService<IConfig, true>) => ({
-        ...configService.get<IConfigSendGrid>('sendGrid'),
-      }),
-      inject: [ConfigService],
-    }),
+    // JwtAuthenticationModule.registerAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: (configService: ConfigService<IConfig, true>) => ({
+    //     ...configService.get<IConfigAuth>('auth'),
+    //   }),
+    //   inject: [ConfigService],
+    // }),
+    // TypeOrmModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: (configService: ConfigService<IConfig, true>) => ({
+    //     ...configService.get('typeORMOptions'),
+    //   }),
+    //   dataSourceFactory: async () => {
+    //     return await dataSource.initialize();
+    //   },
+    //   inject: [ConfigService],
+    // }),
+    // SendgridModule.registerAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: (configService: ConfigService<IConfig, true>) => ({
+    //     ...configService.get<IConfigSendGrid>('sendGrid'),
+    //   }),
+    //   inject: [ConfigService],
+    // }),
     AdminModule,
-    UserModule,
+    // UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
