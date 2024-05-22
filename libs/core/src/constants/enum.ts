@@ -46,6 +46,9 @@ export enum ErrorCode {
   Post_Not_Found = 'Post_Not_Found',
   Comment_Not_Found = 'Comment_Not_Found',
   Notification_Not_Found = 'Notification_Not_Found',
+  CheckOut_Already_Exists = 'CheckOut_Already_Exists',
+  Attendance_Not_Found = 'Attendance_Not_Found',
+  Exceeded_Time_Attendance = 'Exceeded_Time_Attendance',
 }
 
 export enum Environment {
@@ -70,6 +73,13 @@ export enum CommonStatus {
   INACTIVE = 0,
   ACTIVE = 1,
   NOT_VERIFY = 2,
+  REJECT = 3,
+}
+
+export enum AttendanceStatus {
+  DELETED = 0,
+  ACTIVE = 1,
+  PENDING = 2,
   REJECT = 3,
 }
 

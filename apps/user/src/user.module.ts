@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { AuthModule } from './auth/auth.module';
+import { AttendanceModule } from './attendance/attendance.module';
 import { ProfileModule } from './profile/profile.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import config, {
@@ -53,6 +54,7 @@ import { TransformResponseInterceptor } from '@app/core/interceptors/transform-r
     }),
     AuthModule,
     ProfileModule,
+    AttendanceModule,
   ],
   controllers: [UserController],
   providers: [

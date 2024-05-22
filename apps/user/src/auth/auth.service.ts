@@ -13,7 +13,9 @@ import { ResetPasswordDto } from './dtos/resetPassword.dto';
 import { addMinutes, format, subMinutes } from 'date-fns';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import process from 'process';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
