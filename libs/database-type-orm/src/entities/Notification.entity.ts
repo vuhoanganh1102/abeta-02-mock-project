@@ -20,7 +20,7 @@ export class Notification {
   @Column({ name: 'title', type: 'varchar', length: 255 })
   title: string;
 
-  @Column({ name: 'content', type: 'varchar', length: 255 })
+  @Column({ name: 'content', type: 'varchar', length: 1000 })
   content: string;
 
   @ManyToOne(() => Admin, (admin) => admin.notifications)
@@ -35,6 +35,9 @@ export class Notification {
     (userNotification) => userNotification.notification,
   )
   userNotifications: UserNotification[];
+
+  @Column({ name: 'schedule_time', type: 'datetime' })
+  scheduleTime: string;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;

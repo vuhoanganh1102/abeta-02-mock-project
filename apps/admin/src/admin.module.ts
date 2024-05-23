@@ -8,7 +8,6 @@ import {
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSource } from '@app/database-type-orm/data-source';
 import { SendgridModule } from '@app/sendgrid';
-// import { SendMailService } from '@app/send-mail-ha';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { User } from '@app/database-type-orm/entities/User.entity';
 // import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -18,6 +17,7 @@ import { User } from '@app/database-type-orm/entities/User.entity';
 import { AuthModule } from './auth/auth.module';
 import { ManageUserModule } from './manage-user/manage-user.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import {NotificationModule} from "./notification/notification.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -55,6 +55,7 @@ import { AttendanceModule } from './attendance/attendance.module';
     AuthModule,
     ManageUserModule,
     AttendanceModule,
+    NotificationModule
   ],
   controllers: [],
   providers: [

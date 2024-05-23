@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from './User.entity';
 import { Notification } from './Notification.entity';
+import {ReadNotification} from "../../../core/src/constants/enum";
 
 @Entity()
 export class UserNotification {
@@ -32,6 +33,9 @@ export class UserNotification {
 
   @Column({ name: 'notification_id', type: 'bigint', unsigned: true })
   notificationId: number;
+
+  @Column({name: 'is_read', type: "tinyint", unsigned: true, default: ReadNotification.UNREAD})
+  isRead: number;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;
