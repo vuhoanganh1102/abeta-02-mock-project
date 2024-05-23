@@ -13,6 +13,7 @@ import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
 import { AdminGuard } from '@app/jwt-authentication/admin.guard';
 import { AuthModule } from './auth/auth.module';
+import { AttendanceModule } from './attendance/attendance.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,21 +49,22 @@ import { AuthModule } from './auth/auth.module';
       inject: [ConfigService],
     }),
     AuthModule,
+    AttendanceModule,
   ],
   controllers: [],
   providers: [
-    //     {
-    //   provide: APP_GUARD,
-    //   useClass: AdminGuard,
-    // },
-    //   {
-    //     provide: APP_FILTER,
-    //     useClass: AllExceptionsFilter,
-    //   },
-    //   {
-    //     provide: APP_INTERCEPTOR,
-    //     useClass: TransformResponseInterceptor,
-    //   },
+    {
+      provide: APP_GUARD,
+      useClass: AdminGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformResponseInterceptor,
+    },
   ],
 })
 export class AdminModule {}

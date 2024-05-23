@@ -5,6 +5,7 @@ import {
   Patch,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
@@ -12,6 +13,7 @@ import { AuthUser } from '@app/core/decorators/user.decorator';
 import { UpdateProfileDto } from './dtos/updateProfile.dto';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { UserGuard } from '@app/jwt-authentication';
 
 @ApiBearerAuth()
 @ApiTags('Profile')
@@ -26,7 +28,7 @@ export class ProfileController {
 
   @Patch('update-profile')
   updateProfile(@AuthUser() user, @Body() updateDto: UpdateProfileDto) {
-    return this.profileService.updateProfile(user, updateDto);
+    return this.profileService.updateProfile(user.id, updateDto);
   }
 
   @Post('upload-single-image')
@@ -48,8 +50,6 @@ export class ProfileController {
     @AuthUser() { id },
   ) {
     const imageUrl = await this.profileService.uploadAvatar(file, id);
-    return {
-      url: imageUrl,
-    };
+    return this.profileService.uploadAvatar(file, id);
   }
 }

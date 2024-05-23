@@ -25,12 +25,20 @@ export class ProfileService {
   }
 
   async updateProfile(id: number, updateDto: UpdateProfileDto) {
-    const user = await this.userRepository.findOneBy({ id: id });
+    const user = await this.userRepository.findOne({
+      where: {
+        id: id,
+      },
+      select: ['email'],
+    });
     if (!user) {
       throw new Exception(ErrorCode.User_Not_Found, 'User Not Found');
     }
-    Object.assign(user, updateDto);
-    return this.userRepository.save(user);
+    await this.userRepository.update(id, updateDto);
+    return {
+      ...user,
+      ...updateDto,
+    };
   }
 
   async uploadAvatar(file, id: number) {
@@ -47,7 +55,7 @@ export class ProfileService {
         contentType: file.mimeType,
       },
     });
-    return new Promise((resolve, reject) => {
+    new Promise((resolve, reject) => {
       stream.on('error', (err) => {
         reject(err);
       });
@@ -56,5 +64,9 @@ export class ProfileService {
       });
       stream.end(file.buffer);
     });
+    return {
+      image: imageUrl,
+      user: this.userRepository.findOneBy({ id: id }),
+    };
   }
 }

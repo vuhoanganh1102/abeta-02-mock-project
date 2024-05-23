@@ -19,6 +19,7 @@ import { SendgridModule } from '@app/sendgrid';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
+import { EmployeeModule } from './employee/employee.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { TransformResponseInterceptor } from '@app/core/interceptors/transform-r
     AuthModule,
     ProfileModule,
     AttendanceModule,
+    EmployeeModule,
   ],
   controllers: [UserController],
   providers: [
