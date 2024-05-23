@@ -50,6 +50,10 @@ export enum ErrorCode {
   CheckOut_Already_Exists = 'CheckOut_Already_Exists',
   Attendance_Not_Found = 'Attendance_Not_Found',
   Exceeded_Time_Attendance = 'Exceeded_Time_Attendance',
+
+  // admin
+  Not_Found_Data = 'Not_Found_Data',
+  Failed_Creater = 'Failed_Creater',
 }
 
 export enum Environment {

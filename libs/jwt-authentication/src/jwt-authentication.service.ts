@@ -1,5 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { Exception, Unauthorized } from '@app/core/exception';
+import {
+  Exception,
+  // Exception,
+  Unauthorized,
+} from '@app/core/exception';
 import {
   Inject,
   // Inject,
@@ -18,6 +22,7 @@ import { User } from '@app/database-type-orm/entities/User.entity';
 
 import { Repository } from 'typeorm';
 import { ErrorCode } from '@app/core/constants/enum';
+// import { ErrorCode } from '@app/core/constants/enum';
 
 @Injectable()
 export class JwtAuthenticationService {
@@ -59,7 +64,12 @@ export class JwtAuthenticationService {
       expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN,
     });
   }
-
+  public generateAccessTokenForOtp(payload: LiteralObject): string {
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET_KEY,
+      expiresIn: process.env.OTP_EXPIRY_TIME,
+    });
+  }
   public generateRefreshToken(payload: LiteralObject): string {
     return this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET_KEY,
@@ -100,7 +110,8 @@ export class JwtAuthenticationService {
 
       Object.assign(request, { payload: decoded });
 
-      if (decoded.role === 'isAdmin') return true;
+      if (decoded.role && decoded.role === 'isAdmin') return true;
+      else throw new Exception(ErrorCode.Unauthorized);
     } catch (error) {
       throw new Unauthorized(
         "Your authorization token isn't valid. Please login again!",
