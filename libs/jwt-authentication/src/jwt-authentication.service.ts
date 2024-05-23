@@ -66,7 +66,12 @@ export class JwtAuthenticationService {
       expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN,
     });
   }
-
+  public generateAccessTokenForOtp(payload: LiteralObject): string {
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET_KEY,
+      expiresIn: process.env.OTP_EXPIRY_TIME,
+    });
+  }
   public generateRefreshToken(payload: LiteralObject): string {
     return this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET_KEY,

@@ -50,6 +50,17 @@ export class SendgridService {
       html: html,
     };
     try {
+      const otpCategory = templateName === 'verify' ? 1 : 2;
+      const countRecentOtps = await this.countRecentOtps(
+        receiver,
+        5,
+        otpCategory,
+      );
+      if (countRecentOtps > 5)
+        return {
+          status: 'Please send again after 30 minutes.',
+        };
+
       const info = await sendGrid.send(mail);
       this.logger.log(`Email sent! Info: ${info}`);
     } catch (error) {
@@ -63,6 +74,7 @@ export class SendgridService {
     });
     return countTime;
   }
+
   async countRecentOtps(
     email: string,
     minutes: number,
@@ -122,15 +134,14 @@ export class SendgridService {
 
     // Kiểm tra xem thời gian hiện tại có nhỏ hơn thời gian hết hạn của OTP hay không
     const currentTime = new Date();
-    currentTime.setHours(currentTime.getHours() + 0);
+    currentTime.setHours(currentTime.getHours() + 7);
     const otpExpirationTime = new Date(recentOtp.createdAt);
     otpExpirationTime.setMinutes(otpExpirationTime.getMinutes() + 3); // Thời gian hết hạn là 3 phút sau thời điểm gửi OTP
-    console.log(currentTime);
-    console.log(otpExpirationTime);
-    if (currentTime > otpExpirationTime) {
+    console.log(currentTime.toISOString());
+    console.log(otpExpirationTime.toISOString());
+    if (currentTime.toISOString() > otpExpirationTime.toISOString()) {
       return false; // Thời gian đã hết hạn
     }
-
     return true; // OTP hợp lệ và chưa hết hạn
   }
 

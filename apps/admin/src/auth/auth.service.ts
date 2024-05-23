@@ -8,6 +8,8 @@ import { Repository } from 'typeorm';
 import { JwtAuthenticationService } from '@app/jwt-authentication';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import * as bcrypt from 'bcrypt';
+import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
+import { SendgridService } from '@app/sendgrid';
 
 @Injectable()
 export class AuthService {
@@ -15,8 +17,10 @@ export class AuthService {
     @InjectRepository(Admin)
     private readonly adminRepository: Repository<Admin>,
     private readonly jwtService: JwtAuthenticationService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(EmailOtp)
+    private readonly emailRepository: Repository<EmailOtp>,
+
+    private readonly sendGridService: SendgridService,
   ) {}
   async loginAdmin(loginDto: LoginDto) {
     try {
@@ -110,6 +114,100 @@ export class AuthService {
         'Internal Server',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  async sendMailToRessetPassword(receiver: string) {
+    try {
+      const checkExistEmail = await this.adminRepository.findOne({
+        where: { email: receiver },
+      });
+
+      if (checkExistEmail) {
+        const emailOtp = await this.sendGridService.generateOtp(10);
+        const dateNow = new Date();
+        const emailExpire = new Date(
+          dateNow.getTime() + 15 * 60 * 1000,
+        ).toISOString();
+
+        const createEmail = await this.emailRepository.create({
+          userId: checkExistEmail.id,
+          email: checkExistEmail.email,
+          otp: emailOtp,
+          expiredAt: emailExpire,
+          otpCategory: 2,
+        });
+
+        const saveCreater = await this.emailRepository.save(createEmail);
+
+        if (!saveCreater) return new Error('Please send otp email again.');
+        else {
+          const accessToken = await this.jwtService.generateAccessToken({
+            id: checkExistEmail.id,
+            email: checkExistEmail.email,
+            role: process.env.ADMIN_SECRET_KEY,
+          });
+          const sendMail = await this.sendGridService.sendMail(
+            receiver,
+            'Click to link to reset password.',
+            'reset-password',
+            {
+              resetLink: `http://localhost:3000/api/reset-password-form/${emailOtp}`,
+            },
+          );
+
+          return {
+            accessToken,
+          };
+
+          // return {
+          //   user: saveUser,
+          //   email: sendMail,
+          // };
+        }
+      }
+      return new Exception(ErrorCode.Email_Not_Valid).getResponse();
+    } catch (err) {
+      throw new HttpException(
+        'Internal Server',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async ressetPassword(
+    password: string,
+    id: string,
+    email: string,
+    adminId: number,
+  ) {
+    // Tìm kiếm OTP gần đây nhất cho địa chỉ email
+    const recentOtp = await this.emailRepository.findOne({
+      where: { email, otpCategory: 2 },
+      order: { createdAt: 'DESC' }, // Sắp xếp theo thời gian giảm dần để lấy OTP gần nhất
+    });
+    if (!recentOtp)
+      return new HttpException(
+        'Have not otp, please send it.',
+        HttpStatus.BAD_REQUEST,
+      );
+    else {
+      const now = new Date();
+      if (recentOtp.otp === id && recentOtp.expiredAt >= now.toISOString()) {
+        const changePassword = await this.adminRepository.update(
+          {
+            id: adminId,
+          },
+          { password },
+        );
+        if (changePassword)
+          return new HttpException('Successfully', HttpStatus.OK);
+
+        return new HttpException(
+          'Change pass fail, please try.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
   }
 }

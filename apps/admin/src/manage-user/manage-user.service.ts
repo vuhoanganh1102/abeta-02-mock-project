@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateManageUserDto } from './dto/create-manage-user.dto';
-import { UpdateManageUserDto } from './dto/update-manage-user.dto';
+// import { CreateManageUserDto } from './dto/create-manage-user.dto';
+// import { UpdateManageUserDto } from './dto/update-manage-user.dto';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,7 +12,6 @@ import * as bcrypt from 'bcrypt';
 import { SendgridService } from '@app/sendgrid';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 
-class createrEmail {}
 @Injectable()
 export class ManageUserService {
   constructor(
@@ -28,8 +27,8 @@ export class ManageUserService {
   async getUsers() {
     try {
       const userArray = this.userRepository.find();
-      if ((await userArray).length > 0)
-        throw new Exception(ErrorCode.Not_Found_Data);
+      if ((await userArray).length > 0) return userArray;
+      throw new Exception(ErrorCode.Not_Found_Data);
     } catch (err) {
       throw new HttpException(
         'Internal Server',
@@ -45,7 +44,6 @@ export class ManageUserService {
         { id },
         { ...updateUser, updatedAt },
       );
-
       return updater;
     } catch (err) {
       throw new HttpException(
@@ -128,7 +126,11 @@ export class ManageUserService {
     }
   }
   async doneVerifyOtpEmail(email: string, otp: string, otpCategory: number) {
-    const verifyEmail = this.sendGridService.verifyOtp(email, otp, otpCategory);
+    const verifyEmail = await this.sendGridService.verifyOtp(
+      email,
+      otp,
+      otpCategory,
+    );
 
     if (verifyEmail) {
       const updateVerify = await this.userRepository.update(
@@ -136,14 +138,21 @@ export class ManageUserService {
         { isVerified: 1 },
       );
 
-      // if (!updateVerify) return new Error('Verify action is failed.');
-      // return {
-      //   status: 'Verified',
-      // };
+      if (!updateVerify)
+        return new HttpException(
+          'Verify action is failed.',
+          HttpStatus.EXPECTATION_FAILED,
+        );
+      return {
+        status: 'Verified',
+      };
       // return updateVerify;
-      console.log(verifyEmail);
+      // console.log(verifyEmail);
     }
-    return new Error('Verify action is failed.');
+    return new HttpException(
+      'Verify action is failed. This otp is expired.',
+      HttpStatus.EXPECTATION_FAILED,
+    );
   }
 
   async getDetailUser(id: number) {
@@ -177,5 +186,55 @@ export class ManageUserService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async sendAgainEmail(
+    receiver: string,
+    subject: string,
+    templateName: string,
+  ) {
+    const emailOtp = await this.sendGridService.generateOtp(10);
+    const dateNow = new Date();
+    const emailExpire = new Date(
+      dateNow.getTime() + 2 * 60 * 1000,
+    ).toISOString();
+
+    const saveUser = await this.userRepository.findOne({
+      where: { email: receiver },
+    });
+    if (saveUser) {
+      const otpCategory = templateName === 'verify' ? 1 : 2;
+      const createEmail = await this.emailRespository.create({
+        userId: saveUser.id,
+        email: saveUser.email,
+        otp: emailOtp,
+        expiredAt: emailExpire,
+        otpCategory,
+      });
+
+      const saveCreater = await this.emailRespository.save(createEmail);
+
+      if (saveCreater) {
+        const sendmail = await this.sendGridService.sendMail(
+          receiver,
+          subject,
+          templateName,
+          {
+            otp: emailOtp,
+          },
+        );
+        if (sendmail) {
+          return new HttpException('Successfully', HttpStatus.OK);
+        }
+        return new HttpException(
+          'Dont send otp. Please try agian.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+    return new HttpException(
+      'Email havent yet existed.',
+      HttpStatus.BAD_REQUEST,
+    );
   }
 }
