@@ -15,6 +15,7 @@ async function bootstrap() {
   app.set('trust proxy', 1);
   app.useLogger(new CustomLogger());
   const configService: ConfigService<IConfig> = app.get(ConfigService);
+  const port = configService.get<number>('port', 3002);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('User Project')
@@ -25,12 +26,12 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('/api', app, document);
-  //
+
   const logger = new Logger();
 
   await app.listen(3002, async () => {
-    logger.log(`User server running on port:3002`);
-    logger.log(`User application is running on: ${await app.getUrl()}`);
+    logger.log('Server running on port: 3002');
+    logger.log(`Application is running on: ${await app.getUrl()}`);
   });
 }
 bootstrap();
