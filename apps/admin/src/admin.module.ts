@@ -5,7 +5,6 @@ import { JwtAuthenticationModule, UserGuard } from '@app/jwt-authentication';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSource } from '@app/database-type-orm/data-source';
 import { SendgridModule } from '@app/sendgrid';
-// import { SendMailService } from '@app/send-mail-ha';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -14,6 +13,7 @@ import { TransformResponseInterceptor } from '@app/core/interceptors/transform-r
 import { AdminGuard } from '@app/jwt-authentication/admin.guard';
 import { AuthModule } from './auth/auth.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import {NotificationModule} from "./notification/notification.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -50,6 +50,7 @@ import { AttendanceModule } from './attendance/attendance.module';
     }),
     AuthModule,
     AttendanceModule,
+    NotificationModule
   ],
   controllers: [],
   providers: [

@@ -36,7 +36,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         payload: request.payload,
       },
     });
-    this.logger.error(exception);
+    // this.logger.error(exception);
+    console.error(exception);
 
     const { statusCode, ...errorObject } = formatErrorObject(exception);
 

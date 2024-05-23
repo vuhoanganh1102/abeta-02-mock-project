@@ -6,9 +6,10 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
-  JoinColumn,
+  JoinColumn, OneToMany,
 } from 'typeorm';
 import { User } from './User.entity';
+import { Request } from './Request.entity';
 import { AttendanceStatus } from '../../../core/src/constants/enum';
 
 @Entity('attendance')
@@ -23,19 +24,19 @@ export class Attendance {
   @Column({ name: 'user_id', type: 'bigint', unsigned: true })
   userId: number;
 
-  @Column({ type: 'date' })
+  @Column({ name: 'date', type: 'date' })
   date: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'check_in', type: 'timestamp', nullable: true })
   checkIn: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'check_out', type: 'timestamp', nullable: true })
   checkOut: Date;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ name: 'work_hours', type: 'float', nullable: true })
   workHours: number;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ name: 'late_time',type: 'float', nullable: true })
   lateTime: number;
 
   @Column({
@@ -46,6 +47,9 @@ export class Attendance {
     comment: '1: active, 0: deleted, 2: pending, 3: reject',
   })
   status: number;
+
+  @OneToMany(() => Request, (requests) => requests.attendance)
+  requests: Request[];
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;
