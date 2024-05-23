@@ -32,7 +32,6 @@ class ressetPassword {
 @ApiBearerAuth()
 @ApiTags('Auth')
 @Controller('auth')
-@UseGuards(AdminGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

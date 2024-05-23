@@ -17,6 +17,7 @@ import { User } from '@app/database-type-orm/entities/User.entity';
 // import { AdminGuard } from '@app/jwt-authentication/admin.guard';
 import { AuthModule } from './auth/auth.module';
 import { ManageUserModule } from './manage-user/manage-user.module';
+import { AttendanceModule } from './attendance/attendance.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -53,21 +54,22 @@ import { ManageUserModule } from './manage-user/manage-user.module';
     }),
     AuthModule,
     ManageUserModule,
+    AttendanceModule,
   ],
   controllers: [],
   providers: [
-    //     {
-    //   provide: APP_GUARD,
-    //   useClass: AdminGuard,
-    // },
-    //   {
-    //     provide: APP_FILTER,
-    //     useClass: AllExceptionsFilter,
-    //   },
-    //   {
-    //     provide: APP_INTERCEPTOR,
-    //     useClass: TransformResponseInterceptor,
-    //   },
+    {
+      provide: APP_GUARD,
+      useClass: AdminGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformResponseInterceptor,
+    },
   ],
 })
 export class AdminModule {}

@@ -59,6 +59,12 @@
       ],
       "@app/firebase-upload/*": [
         "libs/firebase-upload/src/*"
+      ],
+      "@app/onesignal": [
+        "libs/onesignal/src"
+      ],
+      "@app/onesignal/*": [
+        "libs/onesignal/src/*"
       ]
     }
   }

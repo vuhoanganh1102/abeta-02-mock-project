@@ -43,6 +43,7 @@
     "firebase-admin": "^12.1.0",
     "log4js": "^6.9.1",
     "mysql2": "^3.9.7",
+    "onesignal-node": "^3.4.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20"
@@ -97,7 +98,8 @@
       "^@app/helpers(|/.*)$": "<rootDir>/libs/helpers/src/$1",
       "^@app/jwt-authentication(|/.*)$": "<rootDir>/libs/jwt-authentication/src/$1",
       "^@app/sendgrid(|/.*)$": "<rootDir>/libs/sendgrid/src/$1",
-      "^@app/firebase-upload(|/.*)$": "<rootDir>/libs/firebase-upload/src/$1"
+      "^@app/firebase-upload(|/.*)$": "<rootDir>/libs/firebase-upload/src/$1",
+      "^@app/onesignal(|/.*)$": "<rootDir>/libs/onesignal/src/$1"
     }
   }
 }

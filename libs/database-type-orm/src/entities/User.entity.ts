@@ -27,7 +27,7 @@ export class User {
   @Column({ name: 'last_name', type: 'varchar', length: 255, nullable: true })
   lastName: string;
 
-  @Column({ name: 'password', type: 'varchar', length: 255 })
+  @Column({ name: 'password', type: 'varchar', length: 255, select: false })
   password: string;
 
   @Column({
@@ -55,6 +55,7 @@ export class User {
     type: 'varchar',
     length: 500,
     nullable: true,
+    select: false,
   })
   refreshToken: string;
 
