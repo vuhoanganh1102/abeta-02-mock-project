@@ -29,7 +29,11 @@ export class EmailOtp {
   @Column({ name: 'otp', type: 'varchar', length: 500 })
   otp: string;
 
-  @Column({ name: 'otp_category', type: 'tinyint' })
+  @Column({
+    name: 'otp_category',
+    type: 'tinyint',
+    comment: '1: verify otp, 2: reset password otp',
+  })
   otpCategory: number;
 
   @Column({

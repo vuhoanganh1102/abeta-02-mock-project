@@ -39,7 +39,6 @@ export class AuthService {
     // if (!bcrypt.compareSync(loginDto.password, user.password)) {
     //   throw new Exception(ErrorCode.Password_Not_Valid);
     // }
-    console.log(user);
     return this.generateTokensAndSave(user);
   }
 

@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Exception, Unauthorized } from '@app/core/exception';
 import {
+  Inject,
   // Inject,
   Injectable,
 } from '@nestjs/common';
@@ -9,8 +10,8 @@ import {
   //  JwtVerifyOptions
 } from '@nestjs/jwt';
 import { Request } from 'express';
-// import { JwtAuthenticationModuleOptions } from './jwt-authentication.interface';
-// import { MODULE_OPTIONS_TOKEN } from './jwt-authentication.module-definition';
+import { JwtAuthenticationModuleOptions } from './jwt-authentication.interface';
+import { MODULE_OPTIONS_TOKEN } from './jwt-authentication.module-definition';
 import { LiteralObject } from '@nestjs/common/cache';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '@app/database-type-orm/entities/User.entity';
@@ -22,23 +23,21 @@ import { ErrorCode } from '@app/core/constants/enum';
 export class JwtAuthenticationService {
   constructor(
     private readonly jwtService: JwtService,
-    // @Inject(MODULE_OPTIONS_TOKEN)
-    // public options: JwtAuthenticationModuleOptions,
+    @Inject(MODULE_OPTIONS_TOKEN)
+    public options: JwtAuthenticationModuleOptions,
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
 
   async validateRequest(request: Request) {
-    const token = this.extractFromAuthHeaderAsBearerToken(request)
+    const token = this.extractFromAuthHeaderAsBearerToken(request);
     try {
       const decoded = this.jwtService.verify<LiteralObject>(token, {
         secret: process.env.JWT_SECRET_KEY,
         algorithms: ['HS256'],
       });
-
       Object.assign(request, { payload: decoded });
-
       return true;
     } catch (error) {
       throw new Unauthorized(
