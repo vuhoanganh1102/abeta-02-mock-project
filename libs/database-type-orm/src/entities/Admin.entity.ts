@@ -6,7 +6,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   OneToMany,
-  JoinColumn,
 } from 'typeorm';
 import { Notification } from './Notification.entity';
 import { RequestAdmin } from './RequestAdmin.entity';
