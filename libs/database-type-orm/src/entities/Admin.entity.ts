@@ -6,10 +6,9 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   OneToMany,
-  JoinColumn,
 } from 'typeorm';
 import { Notification } from './Notification.entity';
-import {RequestAdmin} from "./RequestAdmin.entity";
+import { RequestAdmin } from './RequestAdmin.entity';
 
 @Entity('admin')
 export class Admin {
@@ -37,7 +36,7 @@ export class Admin {
   notifications: Notification[];
 
   @OneToMany(() => RequestAdmin, (requests) => requests.admin)
-  requests: Notification[];
+  requests: RequestAdmin[];
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;

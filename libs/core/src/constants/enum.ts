@@ -38,7 +38,7 @@ export enum ErrorCode {
   Token_Expired = 'Token_Expired',
   Verification_Code_Invalid = 'Verification_Code_Invalid',
   User_Not_Found = 'User_Not_Found',
-  Admin_Not_Found = 'User_Not_Found',
+  Admin_Not_Found = 'Admin_Not_Found',
   Task_Duplicate = 'Task_Duplicate',
   Task_Not_Found = 'Task_Not_Found',
   Update_Task_Fail = 'Update_Task_Fail',
@@ -168,7 +168,7 @@ export enum OTPCategory {
   FORGET_PASSWORD = 1,
 }
 
-export enum RequestStatus{
+export enum RequestStatus {
   UNRESOLVED = 0,
   APPROVED = 1,
   DENIED = 2,

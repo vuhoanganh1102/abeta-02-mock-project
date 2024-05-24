@@ -6,7 +6,8 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
-  JoinColumn, OneToMany,
+  JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from './User.entity';
 import { Request } from './Request.entity';
@@ -36,7 +37,7 @@ export class Attendance {
   @Column({ name: 'work_hours', type: 'float', nullable: true })
   workHours: number;
 
-  @Column({ name: 'late_time',type: 'float', nullable: true })
+  @Column({ name: 'late_time', type: 'float', nullable: true })
   lateTime: number;
 
   @Column({

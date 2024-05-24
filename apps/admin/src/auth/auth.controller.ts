@@ -1,19 +1,8 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  // Get,
-  // Param,
-  // Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { LoginDto } from './dtos/Login.dto';
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { AdminGuard } from '@app/jwt-authentication/admin.guard';
 import { AuthAdmin } from '@app/jwt-authentication/admin.decorator';
 
 class Ref {

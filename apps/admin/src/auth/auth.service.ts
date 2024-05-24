@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { Repository } from 'typeorm';
 import { JwtAuthenticationService } from '@app/jwt-authentication';
-import { User } from '@app/database-type-orm/entities/User.entity';
 import * as bcrypt from 'bcrypt';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { SendgridService } from '@app/sendgrid';
