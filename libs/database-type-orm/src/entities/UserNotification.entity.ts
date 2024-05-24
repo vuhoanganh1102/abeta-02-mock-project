@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { User } from './User.entity';
 import { Notification } from './Notification.entity';
-import {ReadNotification} from "../../../core/src/constants/enum";
+import { ReadNotification } from '../../../core/src/constants/enum';
 
 @Entity()
 export class UserNotification {
@@ -18,11 +18,11 @@ export class UserNotification {
   id: number;
 
   @ManyToOne(() => User, (user) => user.user_notifications)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @JoinColumn({ name: 'receiver_id' })
+  receiver: User;
 
-  @Column({ name: 'user_id', type: 'bigint', unsigned: true })
-  userId: number;
+  @Column({ name: 'receiver_id', type: 'bigint', unsigned: true })
+  receiverId: number;
 
   @ManyToOne(
     () => Notification,
@@ -34,7 +34,12 @@ export class UserNotification {
   @Column({ name: 'notification_id', type: 'bigint', unsigned: true })
   notificationId: number;
 
-  @Column({name: 'is_read', type: "tinyint", unsigned: true, default: ReadNotification.UNREAD})
+  @Column({
+    name: 'is_read',
+    type: 'tinyint',
+    unsigned: true,
+    default: ReadNotification.UNREAD,
+  })
   isRead: number;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })

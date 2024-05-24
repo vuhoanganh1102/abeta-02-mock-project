@@ -5,8 +5,8 @@ import { CompanyConfig } from './CompanyConfig.entity';
 import { EmailOtp } from './EmailOtp.entity';
 import { Notification } from './Notification.entity';
 import { UserNotification } from './UserNotification.entity';
-import {Request} from "./Request.entity";
-import {RequestAdmin} from "./RequestAdmin.entity";
+import { Request } from './Request.entity';
+import { RequestAdmin } from './RequestAdmin.entity';
 
 export const DefaultEntities = [
   Admin,
@@ -17,6 +17,6 @@ export const DefaultEntities = [
   Notification,
   UserNotification,
   Request,
-  RequestAdmin
+  RequestAdmin,
 ];
 export default DefaultEntities;

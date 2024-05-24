@@ -74,7 +74,7 @@ export class User {
 
   @OneToMany(
     () => UserNotification,
-    (user_notification) => user_notification.user,
+    (user_notification) => user_notification.receiver,
   )
   user_notifications: UserNotification[];
 

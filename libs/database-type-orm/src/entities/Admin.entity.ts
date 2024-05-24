@@ -9,7 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Notification } from './Notification.entity';
-import {RequestAdmin} from "./RequestAdmin.entity";
+import { RequestAdmin } from './RequestAdmin.entity';
 
 @Entity('admin')
 export class Admin {
@@ -33,11 +33,11 @@ export class Admin {
   @Column({ name: 'reset_token', type: 'varchar', length: 500, nullable: true })
   resetToken: string;
 
-  @OneToMany(() => Notification, (notification) => notification.admin)
+  @OneToMany(() => Notification, (notification) => notification.sender)
   notifications: Notification[];
 
   @OneToMany(() => RequestAdmin, (requests) => requests.admin)
-  requests: Notification[];
+  requests: RequestAdmin[];
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;
