@@ -51,13 +51,14 @@ export class NotificationService {
       throw new Exception(ErrorCode.User_Not_Found);
     }
     //combine date and time
-    const scheduleTime = this.combineDateTime(createDto.date, createDto.time);
+    const dateTimeString = `${createDto.date}T${createDto.time}`;
+    const scheduleTime = new Date(dateTimeString);
     //create notification
     const notification = await this.notificationRepository.save({
       title: createDto.title,
       content: createDto.content,
       senderId: adminId,
-      scheduleTime: scheduleTime,
+      scheduleTime: scheduleTime.toISOString(),
     });
     //create user notification
     const userNotification = await this.userNotificationRepository.save({
@@ -158,7 +159,7 @@ export class NotificationService {
       });
       if (receiver) {
         await this.onesignalService.pushNotification(
-          [receiver.id],
+          [receiver.receiverId],
           notification.title,
           notification.content,
         );
