@@ -1,22 +1,13 @@
 import { Public } from '@app/core/decorators/public.decorator';
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Post, Put, Query } from '@nestjs/common';
 import { LoginAuthDto } from './dtos/login.dto';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthUser } from '@app/core/decorators/user.decorator';
-import { Request } from 'express';
+import { AuthUser } from '@app/core/decorators/authUser.decorator';
 import { ChangePasswordDto } from './dtos/changePassword.dto';
 import { ForgetPasswordDto } from './dtos/forgetPassword.dto';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
+import { refreshTokenDto } from './dtos/refreshToken.dto';
 
 @ApiBearerAuth()
 @ApiTags('Auth')
@@ -51,10 +42,7 @@ export class AuthController {
   }
 
   @Put('refresh')
-  refreshToken(@Req() req: Request) {
-    const refreshToken = req.headers.authorization
-      .trim()
-      .replace('Bearer ', '');
+  refreshToken(@Body() { refreshToken }: refreshTokenDto) {
     return this.authService.refreshTokens(refreshToken);
   }
 }

@@ -17,13 +17,13 @@ import { User } from '@app/database-type-orm/entities/User.entity';
 import { AuthModule } from './auth/auth.module';
 import { ManageUserModule } from './manage-user/manage-user.module';
 import { AttendanceModule } from './attendance/attendance.module';
-import { NotificationModule } from './notification/notification.module';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { AdminGuard } from '@app/jwt-authentication/admin.guard';
+import { AdminGuard } from '@app/core/guards/admin.guard';
 import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
-import {ScheduleModule} from "@nestjs/schedule";
-import {OnesignalModule} from "@app/onesignal";
+import { ScheduleModule } from '@nestjs/schedule';
+import { OnesignalModule } from '@app/onesignal';
+import { NotificationModule } from './notification/notification.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -62,8 +62,7 @@ import {OnesignalModule} from "@app/onesignal";
     ManageUserModule,
     AttendanceModule,
     NotificationModule,
-      ScheduleModule.forRoot(),
-
+    ScheduleModule.forRoot(),
   ],
   controllers: [],
   providers: [

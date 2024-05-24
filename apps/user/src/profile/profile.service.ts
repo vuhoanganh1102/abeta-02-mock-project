@@ -42,28 +42,8 @@ export class ProfileService {
   }
 
   async uploadAvatar(file, id: number) {
-    const storage = this.firebaseService.getStorageInstance();
-    const bucket = storage.bucket();
-    const fileName = `${Date.now()}_${file.originalname}`;
-    const fileUpload = bucket.file(fileName);
-    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${fileName}?alt=media`;
-
+    const imageUrl = await this.firebaseService.uploadSingleImage(file);
     await this.userRepository.update({ id: id }, { avatar: imageUrl });
-
-    const stream = fileUpload.createWriteStream({
-      metadata: {
-        contentType: file.mimeType,
-      },
-    });
-    new Promise((resolve, reject) => {
-      stream.on('error', (err) => {
-        reject(err);
-      });
-      stream.on('finish', () => {
-        resolve(imageUrl);
-      });
-      stream.end(file.buffer);
-    });
     return {
       image: imageUrl,
       user: this.userRepository.findOneBy({ id: id }),

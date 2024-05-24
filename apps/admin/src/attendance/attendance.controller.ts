@@ -17,7 +17,6 @@ export class AttendanceController {
     return this.attendanceService.getListAttendanceToday(pageIndex, pageSize);
   }
 
-  @Public()
   @Get('specific-day')
   @ApiQuery({
     name: 'date',
@@ -30,13 +29,11 @@ export class AttendanceController {
     return this.attendanceService.getListAttendanceInADay(date);
   }
 
-  @Public()
   @Get('get-one/:id')
   getOneAttendance(@Param('id') id: number) {
     return this.attendanceService.getOneAttendance(id);
   }
 
-  @Public()
   @Get('user/:id')
   @ApiQuery({
     name: 'start-date',

@@ -9,7 +9,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
-import { AuthUser } from '@app/core/decorators/user.decorator';
+import { AuthUser } from '@app/core/decorators/authUser.decorator';
 import { UpdateProfileDto } from './dtos/updateProfile.dto';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -49,7 +49,6 @@ export class ProfileController {
     @UploadedFile() file: Express.Multer.File,
     @AuthUser() { id },
   ) {
-    const imageUrl = await this.profileService.uploadAvatar(file, id);
     return this.profileService.uploadAvatar(file, id);
   }
 }

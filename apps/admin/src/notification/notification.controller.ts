@@ -6,7 +6,7 @@ import {
   UpdateNotificationDto,
 } from './dtos/createNotification.dto';
 import { Public } from '@app/core/decorators/public.decorator';
-import { AuthAdmin } from '@app/jwt-authentication/admin.decorator';
+import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
 
 @ApiBearerAuth()
 @ApiTags('Notification')

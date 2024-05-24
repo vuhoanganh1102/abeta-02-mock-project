@@ -11,7 +11,7 @@ import {
 } from './dtos/createNotification.dto';
 import { format, parseISO } from 'date-fns';
 import { Exception } from '@app/core/exception';
-import {ErrorCode, NotificationStatus} from '@app/core/constants/enum';
+import { ErrorCode, NotificationStatus } from '@app/core/constants/enum';
 import { Cron } from '@nestjs/schedule';
 import {OnesignalService} from "@app/onesignal/onesignal.service";
 
@@ -56,22 +56,23 @@ export class NotificationService {
     const notification = await this.notificationRepository.save({
       title: createDto.title,
       content: createDto.content,
-      adminId: adminId,
+      senderId: adminId,
       scheduleTime: scheduleTime,
     });
     //create user notification
     const userNotification = await this.userNotificationRepository.save({
-      userId: createDto.userId,
+      receiverId: createDto.userId,
       notificationId: notification.id,
     });
-    return {
-      receiver: {
-        ...existedUser,
-      },
-      notification: {
-        ...notification,
-      },
-    };
+    if (userNotification)
+      return {
+        receiver: {
+          ...existedUser,
+        },
+        notification: {
+          ...notification,
+        },
+      };
   }
 
   getListNotification() {
@@ -109,14 +110,15 @@ export class NotificationService {
         receiverId: updateDto.userId,
       },
     );
-    return {
-      receiver: {
-        ...existedUser,
-      },
-      notification: {
-        ...notification,
-      },
-    };
+    if (userNotification)
+      return {
+        receiver: {
+          ...existedUser,
+        },
+        notification: {
+          ...notification,
+        },
+      };
   }
 
   async deleteNotification(id: number) {
@@ -138,22 +140,31 @@ export class NotificationService {
     return format(dateTime, 'yyyy-MM-dd HH:mm:ss.SSSxxx');
   }
 
-
   @Cron('*/1 * * * *')
   async getListToSend() {
     const currentDate = new Date();
     //find all pending
     const pendingNotifications = await this.notificationRepository
-        .createQueryBuilder('notification')
-        .where('notification.status = :status', { status: NotificationStatus.PENDING })
-        .andWhere('notification.scheduleTime < :currentDate', { currentDate })
-        .getMany();
+      .createQueryBuilder('notification')
+      .where('notification.status = :status', {
+        status: NotificationStatus.PENDING,
+      })
+      .andWhere('notification.scheduleTime < :currentDate', { currentDate })
+      .getMany();
     //push all if schedule time passed
     for (const notification of pendingNotifications) {
-      const receiver = await this.userNotificationRepository.findOneBy({ notificationId: notification.id });
+      const receiver = await this.userNotificationRepository.findOneBy({
+        notificationId: notification.id,
+      });
       if (receiver) {
-        await this.onesignalService.pushNotification([receiver.id], notification.title, notification.content);
-        await this.notificationRepository.update(notification.id, { status: NotificationStatus.SENT });
+        await this.onesignalService.pushNotification(
+          [receiver.receiverId],
+          notification.title,
+          notification.content,
+        );
+        await this.notificationRepository.update(notification.id, {
+          status: NotificationStatus.SENT,
+        });
       }
     }
   }

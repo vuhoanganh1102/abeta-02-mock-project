@@ -38,7 +38,7 @@ export enum ErrorCode {
   Token_Expired = 'Token_Expired',
   Verification_Code_Invalid = 'Verification_Code_Invalid',
   User_Not_Found = 'User_Not_Found',
-  Admin_Not_Found = 'User_Not_Found',
+  Admin_Not_Found = 'Admin_Not_Found',
   Task_Duplicate = 'Task_Duplicate',
   Task_Not_Found = 'Task_Not_Found',
   Update_Task_Fail = 'Update_Task_Fail',
@@ -174,7 +174,7 @@ export enum RequestStatus {
   DENIED = 2,
 }
 
-export enum NotificationStatus{
+export enum NotificationStatus {
   PENDING = 0,
   SENT = 1,
 }

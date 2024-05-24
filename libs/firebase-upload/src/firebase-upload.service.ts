@@ -16,4 +16,28 @@ export class FirebaseUploadService {
   getStorageInstance(): firebase.storage.Storage {
     return this.storage;
   }
+
+  async uploadSingleImage(file) {
+    const storage = this.getStorageInstance();
+    const bucket = storage.bucket();
+    const fileName = `${Date.now()}_${file.originalname}`;
+    const fileUpload = bucket.file(fileName);
+    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${fileName}?alt=media`;
+
+    const stream = fileUpload.createWriteStream({
+      metadata: {
+        contentType: file.mimeType,
+      },
+    });
+    new Promise((resolve, reject) => {
+      stream.on('error', (err) => {
+        reject(err);
+      });
+      stream.on('finish', () => {
+        resolve(imageUrl);
+      });
+      stream.end(file.buffer);
+    });
+    return imageUrl;
+  }
 }

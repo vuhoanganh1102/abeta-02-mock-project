@@ -11,20 +11,11 @@ import {
 } from 'typeorm';
 import { Request } from './Request.entity';
 import { Admin } from './Admin.entity';
-import { RequestStatus } from '../../../core/src/constants/enum';
 
 @Entity('request_admin')
 export class RequestAdmin {
   @PrimaryGeneratedColumn({ name: 'id', type: 'bigint', unsigned: true })
   id: number;
-
-  @Column({
-    name: 'status',
-    type: 'tinyint',
-    unsigned: true,
-    default: RequestStatus.UNRESOLVED,
-  })
-  status: number;
 
   @OneToOne(() => Request)
   @JoinColumn({ name: 'request_id' })

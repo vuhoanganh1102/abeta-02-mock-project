@@ -32,7 +32,6 @@ export class OnesignalService {
       relation: '=',
       value: id,
     }));
-    console.log(filters);
     const notification: CreateNotificationBody = {
       headings: {
         en: title,
@@ -43,15 +42,12 @@ export class OnesignalService {
       filters: filters,
     };
 
-    console.log(notification);
-
     try {
       await this.client.createNotification(notification);
       return {
         msg: 'Create notification completed',
       };
     } catch (error) {
-      console.error('Error creating notification:', error);
       throw new Error('Failed to create notification: ' + error.message);
     }
   }
