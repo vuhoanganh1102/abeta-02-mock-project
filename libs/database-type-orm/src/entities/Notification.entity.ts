@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { Admin } from './Admin.entity';
 import { UserNotification } from './UserNotification.entity';
-import {NotificationStatus} from "../../../core/src/constants/enum";
+import { NotificationStatus } from '../../../core/src/constants/enum';
 
 @Entity('notification')
 export class Notification {
@@ -24,7 +24,11 @@ export class Notification {
   @Column({ name: 'content', type: 'varchar', length: 1000 })
   content: string;
 
-  @Column({ name: 'status', type: 'tinyint', default: NotificationStatus.PENDING})
+  @Column({
+    name: 'status',
+    type: 'tinyint',
+    default: NotificationStatus.PENDING,
+  })
   status: number;
 
   @ManyToOne(() => Admin, (admin) => admin.notifications)

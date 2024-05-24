@@ -22,9 +22,8 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AdminGuard } from '@app/jwt-authentication/admin.guard';
 import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
-import {ScheduleModule} from "@nestjs/schedule";
-import {OnesignalModule} from "@app/onesignal";
-import {NotificationModule} from "./notification/notification.module";
+import { ScheduleModule } from '@nestjs/schedule';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -44,7 +43,6 @@ import {NotificationModule} from "./notification/notification.module";
       imports: [ConfigModule],
       useFactory: (configService: ConfigService<IConfig, true>) => ({
         ...configService.get('typeORMOptions'),
-        entities: [Admin],
       }),
       dataSourceFactory: async () => {
         return await dataSource.initialize();
@@ -52,13 +50,6 @@ import {NotificationModule} from "./notification/notification.module";
       inject: [ConfigService],
     }),
     TypeOrmModule.forFeature([Admin, User]),
-    SendgridModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService<IConfig, true>) => ({
-        ...configService.get<IConfigSendGrid>('sendGrid'),
-      }),
-      inject: [ConfigService],
-    }),
     AuthModule,
     ManageUserModule,
     AttendanceModule,

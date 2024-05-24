@@ -49,6 +49,7 @@ export enum ErrorCode {
   Notification_Not_Found = 'Notification_Not_Found',
   CheckOut_Already_Exists = 'CheckOut_Already_Exists',
   Attendance_Not_Found = 'Attendance_Not_Found',
+  Attendance_Request_Not_Found = 'Attendance_Request_Not_Found',
   Exceeded_Time_Attendance = 'Exceeded_Time_Attendance',
 
   // admin
