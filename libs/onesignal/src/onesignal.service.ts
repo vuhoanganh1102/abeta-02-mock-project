@@ -1,57 +1,58 @@
+import { Client } from 'onesignal-node';
 import { Injectable } from '@nestjs/common';
-import { CreateNotificationDto } from './dtos/createNotification.dto';
-import { Exception } from '@app/core/exception';
-import { ErrorCode } from '@app/core/constants/enum';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '@app/database-type-orm/entities/User.entity';
-import { Notification } from '@app/database-type-orm/entities/Notification.entity';
-import { UserNotification } from '@app/database-type-orm/entities/UserNotification.entity';
-import { OneSignal } from './onesignal';
-import { Admin } from '@app/database-type-orm/entities/Admin.entity';
+import { ConfigService } from '@nestjs/config';
+
+import { CreateNotificationBody } from 'onesignal-node/lib/types';
+import * as process from 'process';
+import { IConfig } from 'apps/mock-project/src/config';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('dotenv').config();
 
 @Injectable()
 export class OnesignalService {
-  constructor(
-    @InjectRepository(Notification)
-    private notificationRepository: Repository<Notification>,
-    @InjectRepository(UserNotification)
-    private userNotificationRepository: Repository<UserNotification>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    @InjectRepository(Admin)
-    private adminRepository: Repository<Admin>,
-    private oneSignal: OneSignal,
-  ) {}
-  async create(senderId: number, createDto: CreateNotificationDto) {
-    const receiver = await this.adminRepository.findOne({
-      where: {
-        id: createDto.receiverId,
-      },
-    });
-    if (!receiver) {
-      throw new Exception(ErrorCode.User_Not_Found);
-    }
-    const newNotification = await this.notificationRepository.save({
-      title: createDto.title,
-      content: createDto.content,
-      adminId: createDto.receiverId,
-    });
-    const newUserNotification = await this.userNotificationRepository.save({
-      userId: senderId,
-      notificationId: newNotification.id,
-      //   read: false,
-    });
+  client: any;
+  memberTag: string;
+  isReceivedNotificationTag: string;
 
-    const msg = await this.oneSignal.pushNotification(
-      [receiver.id],
-      newNotification.title,
-      newNotification.content,
+  constructor(private readonly configService: ConfigService<IConfig, true>) {
+    this.client = new Client(
+      process.env.ONESIGNAL_APP_ID,
+      process.env.ONESIGNAL_API_KEY,
     );
-    return {
-      notification: newNotification,
-      userNotification: newUserNotification,
-      msg,
+  }
+
+  async pushNotification(
+    playerIds: number[],
+    title: string,
+    content: string,
+  ): Promise<{ msg: string }> {
+    const filters = playerIds.map((id, index) => ({
+      field: 'tag',
+      key: 'user',
+      relation: '=',
+      value: id,
+    }));
+    console.log(filters);
+    const notification: CreateNotificationBody = {
+      headings: {
+        en: title,
+      },
+      contents: {
+        en: content,
+      },
+      filters: filters,
     };
+
+    console.log(notification);
+
+    try {
+      await this.client.createNotification(notification);
+      return {
+        msg: 'Create notification completed',
+      };
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw new Error('Failed to create notification: ' + error.message);
+    }
   }
 }

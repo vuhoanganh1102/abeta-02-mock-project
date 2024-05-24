@@ -1,16 +1,20 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import {ApiBearerAuth, ApiQuery, ApiTags} from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 
+@ApiBearerAuth()
 @ApiTags('Attendance')
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
   @Get('today')
-  getListAttendanceToday() {
-    return this.attendanceService.getListAttendanceToday();
+  getListAttendanceToday(
+      @Query('pageIndex') pageIndex: number,
+      @Query('pageSize') pageSize: number,
+  ) {
+    return this.attendanceService.getListAttendanceToday(pageIndex, pageSize);
   }
 
   @Public()
@@ -60,7 +64,9 @@ export class AttendanceController {
     @Query('start-date') start: string,
     @Query('end-date') end: string,
     @Query('id') id: number,
+    @Query('pageIndex') pageIndex: number,
+    @Query('pageSize') pageSize: number,
   ) {
-    return this.attendanceService.getListAttendanceOfUser(start, end, id);
+    return this.attendanceService.getListAttendanceOfUser(start, end, id, pageIndex, pageSize);
   }
 }

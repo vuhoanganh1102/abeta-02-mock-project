@@ -233,13 +233,6 @@ export class AttendanceService {
         status: AttendanceStatus.PENDING,
       });
     }
-
-    this.onesignalService.create(userId, {
-      title: 'Yêu cầu chấm công',
-      content: 'Đã gửi yêu cầu chấm công',
-      receiverId: 1,
-    });
-
     return { message: 'success' };
   }
 
