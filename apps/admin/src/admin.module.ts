@@ -22,9 +22,9 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AdminGuard } from '@app/jwt-authentication/admin.guard';
 import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
-import {ScheduleModule} from "@nestjs/schedule";
-import {OnesignalModule} from "@app/onesignal";
-import {NotificationModule} from "./notification/notification.module";
+import { ScheduleModule } from '@nestjs/schedule';
+import { OnesignalModule } from '@app/onesignal';
+import { NotificationModule } from './notification/notification.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
