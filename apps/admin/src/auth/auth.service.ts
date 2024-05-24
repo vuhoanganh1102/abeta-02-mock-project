@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { LoginDto } from './dtos/Login.dto';
 import { Exception } from '@app/core/exception';
 import { ErrorCode } from '@app/core/constants/enum';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +8,7 @@ import { JwtAuthenticationService } from '@app/jwt-authentication';
 import * as bcrypt from 'bcrypt';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { SendgridService } from '@app/sendgrid';
+import { LoginDto } from './dtos/login.dto';
 
 @Injectable()
 export class AuthService {

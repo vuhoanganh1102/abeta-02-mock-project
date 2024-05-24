@@ -18,11 +18,11 @@ export class UserNotification {
   id: number;
 
   @ManyToOne(() => User, (user) => user.user_notifications)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @JoinColumn({ name: 'receiver_id' })
+  receiver: User;
 
-  @Column({ name: 'user_id', type: 'bigint', unsigned: true })
-  userId: number;
+  @Column({ name: 'receiver_id', type: 'bigint', unsigned: true })
+  receiverId: number;
 
   @ManyToOne(
     () => Notification,

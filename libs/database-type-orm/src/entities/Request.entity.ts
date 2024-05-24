@@ -9,7 +9,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Attendance } from './Attendance.entity';
-
 import { RequestStatus } from '../../../core/src/constants/enum';
 
 @Entity('request')
@@ -52,7 +51,6 @@ export class Request {
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime' })
   createdAt: string;
-
   @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
   updatedAt: string;
 }

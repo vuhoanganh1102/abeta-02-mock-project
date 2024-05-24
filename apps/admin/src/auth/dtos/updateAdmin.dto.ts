@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/swagger';
-import { CreateAdminDto } from './CreateAdmin.dto';
+import {CreateAdminDto} from "./createAdmin.dto";
 
 export class UpdateAdminDto extends PartialType(CreateAdminDto) {}

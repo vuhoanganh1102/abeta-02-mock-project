@@ -173,3 +173,8 @@ export enum RequestStatus {
   APPROVED = 1,
   DENIED = 2,
 }
+
+export enum NotificationStatus {
+  PENDING = 0,
+  SENT = 1,
+}

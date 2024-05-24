@@ -32,7 +32,7 @@ export class Admin {
   @Column({ name: 'reset_token', type: 'varchar', length: 500, nullable: true })
   resetToken: string;
 
-  @OneToMany(() => Notification, (notification) => notification.admin)
+  @OneToMany(() => Notification, (notification) => notification.sender)
   notifications: Notification[];
 
   @OneToMany(() => RequestAdmin, (requests) => requests.admin)
