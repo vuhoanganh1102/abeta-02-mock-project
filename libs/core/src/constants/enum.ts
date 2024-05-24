@@ -168,13 +168,15 @@ export enum OTPCategory {
   FORGET_PASSWORD = 1,
 }
 
+
 export enum RequestStatus {
   UNRESOLVED = 0,
   APPROVED = 1,
   DENIED = 2,
 }
 
-export enum NotificationStatus{
+export enum NotificationStatus {
   PENDING = 0,
   SENT = 1,
 }
+

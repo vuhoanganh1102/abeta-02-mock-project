@@ -34,3 +34,4 @@ export class CreateNotificationDto {
   date: string;
 }
 export class UpdateNotificationDto extends PartialType(CreateNotificationDto) {}
+

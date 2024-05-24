@@ -1,3 +1,4 @@
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification } from '@app/database-type-orm/entities/Notification.entity';
@@ -18,3 +19,4 @@ import {OnesignalModule} from "@app/onesignal";
   providers: [NotificationService],
 })
 export class NotificationModule {}
+
