@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Attendance } from './Attendance.entity';
+import { RequestStatus } from '../../../core/src/constants/enum';
 
 @Entity('request')
 export class Request {
@@ -37,12 +38,19 @@ export class Request {
   @Column({ name: 'image_url', type: 'varchar', nullable: true })
   imageUrl: string;
 
+  @Column({
+    name: 'status',
+    type: 'tinyint',
+    unsigned: true,
+    default: RequestStatus.UNRESOLVED,
+  })
+  status: number;
+
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime' })
   createdAt: string;
-
   @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
   updatedAt: string;
 }
