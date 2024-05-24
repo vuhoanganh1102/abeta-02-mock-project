@@ -48,10 +48,11 @@ export class OnesignalService {
       newNotification.title,
       newNotification.content,
     );
-    return {
-      notification: newNotification,
-      userNotification: newUserNotification,
-      msg,
-    };
+    if (msg)
+      return {
+        notification: newNotification,
+        userNotification: newUserNotification,
+        msg,
+      };
   }
 }

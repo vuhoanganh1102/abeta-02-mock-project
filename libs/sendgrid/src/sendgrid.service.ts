@@ -56,18 +56,17 @@ export class SendgridService {
         5,
         otpCategory,
       );
-      if (countRecentOtps > 5)
-        return {
-          status: 'Please send again after 30 minutes.',
-        };
-
-      const info = await sendGrid.send(mail);
-      this.logger.log(`Email sent! Info: ${info}`);
+      console.log(countRecentOtps);
+      if (countRecentOtps >= 5) {
+        return false;
+      } else {
+        const info = await sendGrid.send(mail);
+        this.logger.log(`Email sent! Info: ${info}`);
+      }
     } catch (error) {
       this.logger.log('Send mail failed!: ', error.response.body);
     }
   }
-
   async countTime(email: string, type: number): Promise<number> {
     const countTime = await this.otpEmailRepo.count({
       where: { email, otpCategory: type },
@@ -80,19 +79,26 @@ export class SendgridService {
     minutes: number,
     otpCategory: number,
   ): Promise<number> {
-    const timeLimit = new Date();
-    timeLimit.setMinutes(timeLimit.getMinutes() - minutes); // Tính thời gian trước đây
+    const now = new Date();
+    const endtime = new Date(now.setHours(now.getHours() + 7)).toISOString();
+    // const timeLimit = new Date();
+    // timeLimit.setMinutes(timeLimit.getMinutes() - minutes); // Tính thời gian trước đây
     /// Đếm thời gian gửi trong minutes phut
     //10 5 11 6 12 7 13 8 14 9 15 10 16 11
+    const starttime = new Date(
+      now.setMinutes(now.getMinutes() - 5),
+    ).toISOString();
     const count = await this.otpEmailRepo
       .createQueryBuilder('otp')
       .where('otp.email = :email AND otp.otp_category = :type', {
         email,
         type: otpCategory,
       })
-      .andWhere('otp.createdAt >= :timeLimit', { timeLimit })
+      .andWhere('otp.createdAt >= :starttime AND otp.createdAt <= :endtime', {
+        starttime,
+        endtime,
+      })
       .getCount();
-
     return count;
   }
 
