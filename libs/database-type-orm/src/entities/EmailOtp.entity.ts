@@ -36,6 +36,9 @@ export class EmailOtp {
   })
   otpCategory: number;
 
+  @Column({ name: 'user_type', type: 'tinyint', comment: '0: user, 1: admin' })
+  userType: number;
+
   @Column({
     name: 'is_current',
     type: 'tinyint',

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Exception } from '@app/core/exception';
-import { ErrorCode } from '@app/core/constants/enum';
+import {ErrorCode, IsCurrent, OTPCategory} from '@app/core/constants/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { Repository } from 'typeorm';
@@ -209,4 +209,22 @@ export class AuthService {
       }
     }
   }
+
+  // async verify(admin: Admin, otp: string){
+  //   const otpObject = await this.emailRepository
+  //       .createQueryBuilder('otp')
+  //       .where('otp.otp = :otp', { otp: otp })
+  //       .andWhere('otp.isCurrent = :isCurrent', {
+  //         isCurrent: IsCurrent.IS_CURRENT,
+  //       })
+  //       .andWhere('otp.category = :otpType', {
+  //         otpType: OTPCategory.REGISTER,
+  //       })
+  //       .andWhere('otp.expiredAt > :now', { now: new Date() })
+  //       .getOne();
+  //   if (!otpObject) {
+  //     throw new Exception(ErrorCode.OTP_Invalid);
+  //   }
+  //   const
+  // }
 }

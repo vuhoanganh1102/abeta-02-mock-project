@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {Body, Controller, Get, Param, Patch, Post, Query} from '@nestjs/common';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
 import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
+import {ForgetPasswordDto} from "../../../user/src/auth/dtos/forgetPassword.dto";
 
 class Ref {
   @ApiProperty({ example: '{"refresh_token":}' })
@@ -59,4 +60,9 @@ export class AuthController {
       admin.id,
     );
   }
+
+  // @Patch('verify')
+  // forgetPassword(@AuthAdmin() admin, @Query('otp') otp: string) {
+  //   return this.authService.verify(admin, otp);
+  // }
 }

@@ -11,9 +11,11 @@ import {
 } from './dtos/createNotification.dto';
 import { format, parseISO } from 'date-fns';
 import { Exception } from '@app/core/exception';
-import { ErrorCode, NotificationStatus } from '@app/core/constants/enum';
+import {ErrorCode, NotificationStatus, ReadNotification} from '@app/core/constants/enum';
 import { Cron } from '@nestjs/schedule';
 import {OnesignalService} from "@app/onesignal/onesignal.service";
+import {assignPaging, returnPaging} from "@app/helpers";
+import {skip} from "rxjs";
 
 @Injectable()
 export class NotificationService {
@@ -76,8 +78,24 @@ export class NotificationService {
       };
   }
 
-  getListNotification() {
-    return this.notificationRepository.find();
+  async getListNotification(pageIndex: number, pageSize: number) {
+    const params = assignPaging({
+      pageIndex: pageIndex,
+      pageSize: pageSize,
+    });
+    const queryBuilder = this.userNotificationRepository.createQueryBuilder('userNotification')
+        .leftJoinAndSelect('userNotification.notification', 'notification')
+        .where('userNotification.deletedAt IS NULL')
+        .skip(params.skip)
+        .take(params.pageSize);
+
+    const [notifications, totalNotifications] = await queryBuilder.getManyAndCount();
+
+    const pagingResult = returnPaging(notifications, totalNotifications, params);
+
+    return {
+      notifications: pagingResult,
+    };
   }
 
   getOneNotification(id: number) {

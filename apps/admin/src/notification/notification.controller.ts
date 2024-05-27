@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {Body, Controller, Get, Param, Patch, Post, Query} from '@nestjs/common';
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
 import {
@@ -7,8 +7,8 @@ import {
 } from './dtos/createNotification.dto';
 import { Public } from '@app/core/decorators/public.decorator';
 import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
+import {OnesignalService} from "@app/onesignal";
 
-import { OneSignal } from '@app/onesignal/onesignal';
 
 class tech {
   @ApiProperty({ example: '[]' })
@@ -24,7 +24,7 @@ class tech {
 export class NotificationController {
   constructor(
     private notificationService: NotificationService,
-    private readonly pushNoti: OneSignal,
+    private readonly onesignalService: OnesignalService,
   ) {}
 
   @Post('create')
@@ -42,8 +42,11 @@ export class NotificationController {
   }
 
   @Get('get-list')
-  getListNotification() {
-    return this.notificationService.getListNotification();
+  getListNotification(
+      @Query('pageIndex') pageIndex: number,
+      @Query('pageSize') pageSize: number,
+  ) {
+    return this.notificationService.getListNotification(pageIndex, pageSize);
   }
 
   @Patch('update/:id')
@@ -61,6 +64,6 @@ export class NotificationController {
 
   @Post('/testPush')
   async pushNotification(@Body() body: tech) {
-    return this.pushNoti.pushNotification(body.array, body.title, body.content);
+    return this.onesignalService.pushNotification(body.array, body.title, body.content);
   }
 }

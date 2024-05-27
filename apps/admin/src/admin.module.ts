@@ -49,7 +49,6 @@ import {NotificationModule} from "./notification/notification.module";
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([Admin, User]),
     AuthModule,
     ManageUserModule,
     AttendanceModule,

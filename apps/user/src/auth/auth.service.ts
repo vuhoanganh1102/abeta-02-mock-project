@@ -12,8 +12,8 @@ import { SendgridService } from '@app/sendgrid';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
 import { addMinutes, format, subMinutes } from 'date-fns';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
-import process from 'process';
 import { Injectable } from '@nestjs/common';
+import * as process from "process";
 
 @Injectable()
 export class AuthService {
@@ -36,9 +36,9 @@ export class AuthService {
     if (!user) {
       throw new Exception(ErrorCode.Email_Not_Valid);
     }
-    // if (!bcrypt.compareSync(loginDto.password, user.password)) {
-    //   throw new Exception(ErrorCode.Password_Not_Valid);
-    // }
+    if (!bcrypt.compareSync(loginDto.password, user.password)) {
+      throw new Exception(ErrorCode.Password_Not_Valid);
+    }
     return this.generateTokensAndSave(user);
   }
 
@@ -182,7 +182,7 @@ export class AuthService {
 
     //create new otp
     const forgetOtp = this.generateRandomResetToken();
-    const resetLink = process.env.RESET_LINK;
+    const resetLink = process.env.RESET_LINK + `${forgetOtp}`;
     const expiredAt = addMinutes(
       new Date(),
       parseInt(process.env.OTP_EXPIRY_TIME),

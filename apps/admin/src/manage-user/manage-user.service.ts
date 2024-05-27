@@ -5,12 +5,14 @@ import { User } from '@app/database-type-orm/entities/User.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Exception } from '@app/core/exception';
-import { ErrorCode } from '@app/core/constants/enum';
+import {ErrorCode, OTPCategory} from '@app/core/constants/enum';
 import { UpdateUserDto } from './dto/UpdateUser.entity';
 import { CreateUserDto } from './dto/CreateUser.entity';
 import * as bcrypt from 'bcrypt';
 import { SendgridService } from '@app/sendgrid';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
+import {FirebaseUploadService} from "@app/firebase-upload";
+import {Admin} from "@app/database-type-orm/entities/Admin.entity";
 
 @Injectable()
 export class ManageUserService {
@@ -20,7 +22,7 @@ export class ManageUserService {
 
     @InjectRepository(EmailOtp)
     private readonly emailRespository: Repository<EmailOtp>,
-
+    private readonly firebaseService: FirebaseUploadService,
     private readonly sendGridService: SendgridService,
   ) {}
 
@@ -38,19 +40,11 @@ export class ManageUserService {
   }
 
   async updateUser(id: number, updateUser: UpdateUserDto) {
-    try {
       const updatedAt = new Date().toISOString();
-      const updater = await this.userRepository.update(
+      return await this.userRepository.update(
         { id },
         { ...updateUser, updatedAt },
       );
-      return updater;
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
   }
 
   async createUser(createUser: CreateUserDto) {
@@ -73,7 +67,7 @@ export class ManageUserService {
         if (!saveUser)
           return new Exception(ErrorCode.Failed_Creater).getResponse();
         else {
-          const emailOtp = await this.sendGridService.generateOtp(10);
+          const emailOtp = await this.sendGridService.generateOtp(50);
           const dateNow = new Date();
           const emailExpire = new Date(
             dateNow.getTime() + 2 * 60 * 1000,
@@ -125,49 +119,34 @@ export class ManageUserService {
       );
     }
   }
-  async doneVerifyOtpEmail(email: string, otp: string, otpCategory: number) {
-    const verifyEmail = await this.sendGridService.verifyOtp(
-      email,
-      otp,
-      otpCategory,
-    );
-
-    if (verifyEmail) {
-      const updateVerify = await this.userRepository.update(
-        { email },
-        { isVerified: 1 },
-      );
-
-      if (!updateVerify)
-        return new HttpException(
-          'Verify action is failed.',
-          HttpStatus.EXPECTATION_FAILED,
-        );
-      return {
-        status: 'Verified',
-      };
-      // return updateVerify;
-    }
-    return new HttpException(
-      'Verify action is failed. This otp is expired.',
-      HttpStatus.EXPECTATION_FAILED,
-    );
-  }
 
   async getDetailUser(id: number) {
-    try {
-      const find = await this.userRepository.findOne({ where: { id } });
-      if (find) return find;
-      return {
-        status: 'Not Found Data.',
-      };
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    const user = await this.userRepository.createQueryBuilder('user')
+        .select([
+          'user.id',
+          'user.avatar',
+          'user.dateOfBirth',
+          'user.lastName',
+          'user.firstName',
+          'user.phoneNumber',
+          'user.email',
+          'user.isVerified',
+          'user.deletedAt'
+        ])
+        .where('user.id = :id', { id })
+        .withDeleted()
+        .getOne();
+
+    if(user.deletedAt){
+      throw new Exception(ErrorCode.User_Deleted);
     }
+    if (!user) {
+      throw new Exception(ErrorCode.User_Not_Found);
+    }
+
+    return user;
   }
+
 
   async deleteUser(id: number) {
     try {
@@ -239,5 +218,19 @@ export class ManageUserService {
       'Email havent yet existed.',
       HttpStatus.BAD_REQUEST,
     );
+  }
+
+  async uploadAvatar(file, id: number) {
+    console.log(id)
+    const imageUrl = await this.firebaseService.uploadSingleImage(file);
+    await this.userRepository.update({ id: id }, { avatar: imageUrl });
+    const user = await this.userRepository.findOne({
+      where: {id: id},
+      select: ["id", "avatar", "dateOfBirth", "lastName", "firstName", "phoneNumber"]
+    });
+    return {
+      image: imageUrl,
+      user: {...user},
+    };
   }
 }
