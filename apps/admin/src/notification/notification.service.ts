@@ -13,7 +13,7 @@ import { format, parseISO } from 'date-fns';
 import { Exception } from '@app/core/exception';
 import { ErrorCode, NotificationStatus } from '@app/core/constants/enum';
 import { Cron } from '@nestjs/schedule';
-import { OneSignal } from '@app/onesignal/onesignal';
+import {OnesignalService} from "@app/onesignal/onesignal.service";
 
 @Injectable()
 export class NotificationService {
@@ -26,7 +26,7 @@ export class NotificationService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Admin)
     private readonly adminRepository: Repository<Admin>,
-    private readonly onesignalService: OneSignal,
+    private readonly onesignalService: OnesignalService,
   ) {}
 
   async createNewNotification(
@@ -141,7 +141,7 @@ export class NotificationService {
     return format(dateTime, 'yyyy-MM-dd HH:mm:ss.SSSxxx');
   }
 
-  @Cron('*/1 * * * *')
+  @Cron('*/5 * * * *')
   async getListToSend() {
     const currentDate = new Date();
     //find all pending

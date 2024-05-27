@@ -39,10 +39,8 @@ export class SendgridService {
       'templates',
       `${templateName}.ejs`,
     );
-    console.log(templatePath);
     const template = await readFile(templatePath, 'utf-8');
     html = ejs.render(template, attachedData || {});
-    console.log(attachedData);
     const mail = {
       from: this.options.sender,
       to: receiver,
@@ -56,7 +54,6 @@ export class SendgridService {
         5,
         otpCategory,
       );
-      console.log(countRecentOtps);
       if (countRecentOtps >= 5) {
         return false;
       } else {
@@ -116,8 +113,6 @@ export class SendgridService {
     });
     const dateNow = new Date();
     const expiredAt = await new Date(otpEmail.createdAt);
-    console.log(expiredAt);
-    console.log(dateNow);
     if (expiredAt < dateNow) return true; // Nếu không tìm thấy OTP hoặc đã hết hạn, trả về true
     return false;
   }
@@ -143,8 +138,6 @@ export class SendgridService {
     currentTime.setHours(currentTime.getHours() + 7);
     const otpExpirationTime = new Date(recentOtp.createdAt);
     otpExpirationTime.setMinutes(otpExpirationTime.getMinutes() + 3); // Thời gian hết hạn là 3 phút sau thời điểm gửi OTP
-    console.log(currentTime.toISOString());
-    console.log(otpExpirationTime.toISOString());
     if (currentTime.toISOString() > otpExpirationTime.toISOString()) {
       return false; // Thời gian đã hết hạn
     }

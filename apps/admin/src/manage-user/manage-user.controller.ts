@@ -12,7 +12,7 @@ import { ManageUserService } from './manage-user.service';
 import { UpdateUserDto } from './dto/UpdateUser.entity';
 import { CreateUserDto } from './dto/CreateUser.entity';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AdminGuard } from '@app/jwt-authentication/admin.guard';
+import { AdminGuard } from '@app/core/guards/admin.guard';
 // import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { SendgridService } from '@app/sendgrid';
 import { Obj } from './dto/SendAgainMail.dto';

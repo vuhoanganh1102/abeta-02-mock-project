@@ -102,7 +102,6 @@ export class JwtAuthenticationService {
   async validateAdminRequest(request: Request) {
     const token = this.extractFromAuthHeaderAsBearerToken(request);
 
-    console.log(token)
     try {
       const decoded = this.jwtService.verify<LiteralObject>(token, {
         secret: process.env.JWT_SECRET_KEY,

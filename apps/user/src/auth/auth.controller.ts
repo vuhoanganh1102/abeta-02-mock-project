@@ -3,7 +3,7 @@ import { Body, Controller, Post, Put, Query } from '@nestjs/common';
 import { LoginAuthDto } from './dtos/login.dto';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthUser } from '@app/core/decorators/user.decorator';
+import { AuthUser } from '@app/core/decorators/authUser.decorator';
 import { ChangePasswordDto } from './dtos/changePassword.dto';
 import { ForgetPasswordDto } from './dtos/forgetPassword.dto';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';

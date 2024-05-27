@@ -7,8 +7,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
-import { IS_PUBLIC_KEY } from './jwt-authentication.decorator';
-import { JwtAuthenticationService } from './jwt-authentication.service';
+import { IS_PUBLIC_KEY } from '@app/jwt-authentication/jwt-authentication.decorator';
+import { JwtAuthenticationService } from '@app/jwt-authentication/jwt-authentication.service';
 
 @Injectable()
 export class UserGuard implements CanActivate {

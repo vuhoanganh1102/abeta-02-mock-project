@@ -2,8 +2,8 @@ import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { AuthAdmin } from '@app/jwt-authentication/admin.decorator';
 import { LoginDto } from './dtos/login.dto';
+import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
 
 class Ref {
   @ApiProperty({ example: '{"refresh_token":}' })
@@ -14,7 +14,7 @@ class sendLinkMail {
   email: string;
 }
 
-class ressetPassword {
+class resetPassword {
   @ApiProperty({ example: '23456' })
   password: string;
 }
@@ -34,7 +34,6 @@ export class AuthController {
   @Post('newToken')
   async resetAccessToken(@Body() obj: Ref) {
     return this.authService.getNewAccessToken(obj.refresh_token);
-    // console.log(obj.refresh_token);
   }
 
   @Public()
@@ -48,12 +47,12 @@ export class AuthController {
     return { id };
   }
   @Post('reset-password/:id')
-  async ressetPassword(
-    @Body() body: ressetPassword,
+  async resetPassword(
+    @Body() body: resetPassword,
     @Param('id') id: string,
     @AuthAdmin() admin,
   ) {
-    return this.authService.ressetPassword(
+    return this.authService.resetPassword(
       body.password,
       id,
       admin.email,

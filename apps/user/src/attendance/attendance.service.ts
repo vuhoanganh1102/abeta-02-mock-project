@@ -285,7 +285,6 @@ export class AttendanceService {
       requestId: request.id,
       adminId: 1,
     });
-
     return { message: 'success' };
   }
 

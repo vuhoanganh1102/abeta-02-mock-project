@@ -1,4 +1,4 @@
-import { AuthUser } from '@app/core/decorators/user.decorator';
+import { AuthUser } from '@app/core/decorators/authUser.decorator';
 import {
   Body,
   Controller,

@@ -2,9 +2,9 @@ import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
-import { AuthAdmin } from '@app/jwt-authentication/admin.decorator';
 import { AttendanceRequestPageDto } from './dtos/attendanceRequestPage.dto';
 import { AttendanceRequestDto } from './dtos/attendanceRequest.dto';
+import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
 
 @ApiBearerAuth()
 @ApiTags('Attendance')
@@ -13,11 +13,13 @@ export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
   @Get('today')
-  getListAttendanceToday() {
-    return this.attendanceService.getListAttendanceToday();
+  getListAttendanceToday(
+      @Query('pageIndex') pageIndex: number,
+      @Query('pageSize') pageSize: number,
+  ) {
+    return this.attendanceService.getListAttendanceToday(pageIndex, pageSize);
   }
 
-  @Public()
   @Get('specific-day')
   @ApiQuery({
     name: 'date',
@@ -30,13 +32,11 @@ export class AttendanceController {
     return this.attendanceService.getListAttendanceInADay(date);
   }
 
-  @Public()
   @Get('get-one/:id')
   getOneAttendance(@Param('id') id: number) {
     return this.attendanceService.getOneAttendance(id);
   }
 
-  @Public()
   @Get('user/:id')
   @ApiQuery({
     name: 'start-date',
@@ -64,8 +64,10 @@ export class AttendanceController {
     @Query('start-date') start: string,
     @Query('end-date') end: string,
     @Query('id') id: number,
+    @Query('pageIndex') pageIndex: number,
+    @Query('pageSize') pageSize: number,
   ) {
-    return this.attendanceService.getListAttendanceOfUser(start, end, id);
+    return this.attendanceService.getListAttendanceOfUser(start, end, id, pageIndex, pageSize);
   }
 
   @Post('request')

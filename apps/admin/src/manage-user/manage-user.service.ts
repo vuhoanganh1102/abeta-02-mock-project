@@ -147,7 +147,6 @@ export class ManageUserService {
         status: 'Verified',
       };
       // return updateVerify;
-      // console.log(verifyEmail);
     }
     return new HttpException(
       'Verify action is failed. This otp is expired.',

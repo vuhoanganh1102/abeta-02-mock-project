@@ -174,7 +174,7 @@ export class AuthService {
     }
   }
 
-  async ressetPassword(
+  async resetPassword(
     password: string,
     id: string,
     email: string,
