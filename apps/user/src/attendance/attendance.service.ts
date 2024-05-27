@@ -174,6 +174,10 @@ export class AttendanceService {
     file,
     attendanceRequestDto: AttendanceRequestDto,
   ) {
+    if (format(new Date(), 'yyyy-MM-dd') < attendanceRequestDto.date) {
+      throw new Exception(ErrorCode.Exceeded_Time_Request);
+    }
+
     const attendance = await this.attendanceRepository.findOne({
       where: {
         userId: userId,
@@ -192,7 +196,7 @@ export class AttendanceService {
       let lateTime, workHours;
       if (
         this.compareSmallerTime(
-          format(attendance.checkIn, 'HH:mm:ss'),
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           this.companyConfig.morningEndTime,
         ) &&
         this.compareSmallerTime(
@@ -205,7 +209,7 @@ export class AttendanceService {
           format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
         );
         const workHoursMorning = +this.calculateTimeToHours(
-          format(attendance.checkIn, 'HH:mm:ss'),
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
         );
         workHours = workHoursMorning;
@@ -213,7 +217,7 @@ export class AttendanceService {
 
       if (
         this.compareSmallerTime(
-          format(attendance.checkIn, 'HH:mm:ss'),
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           this.companyConfig.morningEndTime,
         ) &&
         !this.compareSmallerTime(
@@ -226,7 +230,7 @@ export class AttendanceService {
           format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
         );
         const workHoursMorning = +this.calculateTimeToHours(
-          format(attendance.checkIn, 'HH:mm:ss'),
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           this.companyConfig.morningEndTime,
         );
         const workHoursAfternoon = +this.calculateTimeToHours(
@@ -239,7 +243,7 @@ export class AttendanceService {
 
       if (
         !this.compareSmallerTime(
-          format(attendance.checkIn, 'HH:mm:ss'),
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           this.companyConfig.morningEndTime,
         )
       ) {
@@ -248,7 +252,7 @@ export class AttendanceService {
           format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
         );
         const workHoursAfternoon = +this.calculateTimeToHours(
-          format(attendance.checkIn, 'HH:mm:ss'),
+          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
         );
         workHours = workHoursAfternoon;
