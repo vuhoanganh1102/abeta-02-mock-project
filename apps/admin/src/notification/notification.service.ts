@@ -140,7 +140,7 @@ export class NotificationService {
     return format(dateTime, 'yyyy-MM-dd HH:mm:ss.SSSxxx');
   }
 
-  @Cron('*/1 * * * *')
+  @Cron('*/5 * * * *')
   async getListToSend() {
     const currentDate = new Date();
     //find all pending

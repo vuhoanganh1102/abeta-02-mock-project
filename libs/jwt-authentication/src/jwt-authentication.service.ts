@@ -102,6 +102,7 @@ export class JwtAuthenticationService {
   async validateAdminRequest(request: Request) {
     const token = this.extractFromAuthHeaderAsBearerToken(request);
 
+    console.log(token)
     try {
       const decoded = this.jwtService.verify<LiteralObject>(token, {
         secret: process.env.JWT_SECRET_KEY,
@@ -109,7 +110,6 @@ export class JwtAuthenticationService {
       });
 
       Object.assign(request, { payload: decoded });
-
       if (decoded.role && decoded.role === 'isAdmin') return true;
       else throw new Exception(ErrorCode.Unauthorized);
     } catch (error) {

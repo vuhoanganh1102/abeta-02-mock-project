@@ -1,7 +1,10 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import {ApiBearerAuth, ApiQuery, ApiTags} from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
+import { AttendanceRequestPageDto } from './dtos/attendanceRequestPage.dto';
+import { AttendanceRequestDto } from './dtos/attendanceRequest.dto';
+import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
 
 @ApiBearerAuth()
 @ApiTags('Attendance')
@@ -65,5 +68,26 @@ export class AttendanceController {
     @Query('pageSize') pageSize: number,
   ) {
     return this.attendanceService.getListAttendanceOfUser(start, end, id, pageIndex, pageSize);
+  }
+
+  @Post('request')
+  getListRequestAttendanceOfUser(
+    @AuthAdmin() { id },
+    @Body() attendanceRequestPageDto: AttendanceRequestPageDto,
+  ) {
+    return this.attendanceService.getListRequestAttendanceOfUser(
+      id,
+      attendanceRequestPageDto,
+    );
+  }
+
+  @Post('request/accept')
+  acceptRequestAttendanceOfUser(@Body() { requestId }: AttendanceRequestDto) {
+    return this.attendanceService.acceptRequestAttendanceOfUser(requestId);
+  }
+
+  @Post('request/reject')
+  rejectRequestAttendanceOfUser(@Body() { requestId }: AttendanceRequestDto) {
+    return this.attendanceService.rejectRequestAttendanceOfUser(requestId);
   }
 }

@@ -14,6 +14,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
 import { EmployeeModule } from './employee/employee.module';
+import {NotificationModule} from "./notification/notification.module";
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { EmployeeModule } from './employee/employee.module';
     ProfileModule,
     AttendanceModule,
     EmployeeModule,
+      NotificationModule
   ],
   controllers: [UserController],
   providers: [
