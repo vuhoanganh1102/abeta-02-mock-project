@@ -78,7 +78,7 @@ export class ManageUserController {
 
   // api gui lai opt email de xac nhan tao tai khoan cho nguoi dung khi email
   // @Public()
-  @Post('sendmailagain')
+  @Post('re-send-email')
   async sendEmail(@Body() body: Obj) {
     return this.manageUserService.sendAgainEmail(
       body.receiver,

@@ -8,7 +8,7 @@ import { JwtAuthenticationService } from '@app/jwt-authentication';
 import * as bcrypt from 'bcrypt';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { SendgridService } from '@app/sendgrid';
-import { LoginDto } from './dtos/login.dto';
+import { LoginDto } from './dtos/Login.dto';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +42,7 @@ export class AuthService {
       // generate access token moi
       const access_token = await this.jwtService.generateAccessToken(payload);
 
-      // kiem tra xem ref token trong db co khong va co con han k
+      //kiem tra xem ref token trong db co khong va co con han k
       if (member.refreshToken !== '') {
         const expireRefToken = await this.jwtService.verifyRefreshToken(
           member.refreshToken,
@@ -84,7 +84,7 @@ export class AuthService {
       const checkRefToken =
         await this.jwtService.verifyRefreshToken(refreshToken);
 
-      if (!checkRefToken) {
+      if (checkRefToken === false) {
         throw new Exception(ErrorCode.Token_Expired);
       } else {
         const getRefTokenInDb = await this.adminRepository.findOne({
@@ -94,7 +94,10 @@ export class AuthService {
         if (!getRefTokenInDb) {
           throw new Exception(ErrorCode.Token_Not_Exist);
         } else {
-          if ((await getRefTokenInDb).refreshToken === refreshToken) {
+          if (
+            getRefTokenInDb.refreshToken === refreshToken &&
+            getRefTokenInDb.resetToken === checkRefToken.resetToken
+          ) {
             const access_token = await this.jwtService.generateAccessToken({
               id: getRefTokenInDb.id,
               email: getRefTokenInDb.email,
@@ -121,24 +124,33 @@ export class AuthService {
       const checkExistEmail = await this.adminRepository.findOne({
         where: { email: receiver },
       });
-
+      console.log(checkExistEmail);
       if (checkExistEmail) {
         const emailOtp = await this.sendGridService.generateOtp(10);
         const dateNow = new Date();
-        const emailExpire = new Date(
-          dateNow.getTime() + 15 * 60 * 1000,
+        const emailExpire = new Date(dateNow.getTime() + 15 * 60 * 1000);
+        const emailExpireISO = new Date(
+          emailExpire.setHours(emailExpire.getHours() + 7),
         ).toISOString();
-
-        const createEmail = await this.emailRepository.create({
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const checkIsCurrent = await this.emailRepository.update(
+          {
+            email: checkExistEmail.email,
+            isCurrent: 1,
+          },
+          { isCurrent: 0 },
+        );
+        const createEmail = await this.emailRepository.save({
           userId: checkExistEmail.id,
           email: checkExistEmail.email,
           otp: emailOtp,
-          expiredAt: emailExpire,
+          expiredAt: emailExpireISO,
           otpCategory: 2,
+          userType: 1,
         });
 
         const saveCreater = await this.emailRepository.save(createEmail);
-
+        // return createEmail;
         if (!saveCreater) return new Error('Please send otp email again.');
         else {
           const accessToken = await this.jwtService.generateAccessToken({
@@ -151,21 +163,20 @@ export class AuthService {
             'Click to link to reset password.',
             'reset-password',
             {
-              resetLink: `http://localhost:3000/api/reset-password-form/${emailOtp}`,
+              resetLink: `http://localhost:3001/reset-password-form/${emailOtp}`,
             },
           );
-
-          return {
-            accessToken,
-          };
+          if (sendMail !== false)
+            return {
+              accessToken,
+            };
 
           // return {
           //   user: saveUser,
           //   email: sendMail,
           // };
         }
-      }
-      return new Exception(ErrorCode.Email_Not_Valid).getResponse();
+      } else return new Exception(ErrorCode.Email_Not_Valid).getResponse();
     } catch (err) {
       throw new HttpException(
         'Internal Server',
@@ -174,16 +185,10 @@ export class AuthService {
     }
   }
 
-  async resetPassword(
-    password: string,
-    id: string,
-    email: string,
-    adminId: number,
-  ) {
+  async resetPassword(password: string, id: string, email: string) {
     // Tìm kiếm OTP gần đây nhất cho địa chỉ email
     const recentOtp = await this.emailRepository.findOne({
-      where: { email, otpCategory: 2 },
-      order: { createdAt: 'DESC' }, // Sắp xếp theo thời gian giảm dần để lấy OTP gần nhất
+      where: { email, otpCategory: 2, userType: 1, isCurrent: 1 },
     });
     if (!recentOtp)
       return new HttpException(
@@ -191,22 +196,26 @@ export class AuthService {
         HttpStatus.BAD_REQUEST,
       );
     else {
-      const now = new Date();
-      if (recentOtp.otp === id && recentOtp.expiredAt >= now.toISOString()) {
+      const dateNow = new Date();
+      const check = new Date(recentOtp.expiredAt);
+
+      if (recentOtp.otp === id && check >= dateNow) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const changePassword = await this.adminRepository.update(
           {
-            id: adminId,
+            email,
           },
           { password },
         );
-        if (changePassword)
-          return new HttpException('Successfully', HttpStatus.OK);
+
+        return new HttpException('Successfully Changed.', HttpStatus.OK);
 
         return new HttpException(
           'Change pass fail, please try.',
           HttpStatus.BAD_REQUEST,
         );
       }
+      return new HttpException('Dont change.', HttpStatus.BAD_REQUEST);
     }
   }
 

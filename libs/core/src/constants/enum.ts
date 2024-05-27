@@ -52,6 +52,7 @@ export enum ErrorCode {
   Attendance_Not_Found = 'Attendance_Not_Found',
   Attendance_Request_Not_Found = 'Attendance_Request_Not_Found',
   Exceeded_Time_Attendance = 'Exceeded_Time_Attendance',
+  Exceeded_Time_Request = 'Exceeded_Time_Request',
 
   // admin
   Not_Found_Data = 'Not_Found_Data',

@@ -61,9 +61,9 @@ export class NotificationController {
   deleteNotification(@Param('id') id: number) {
     return this.notificationService.deleteNotification(id);
   }
-
   @Post('/testPush')
   async pushNotification(@Body() body: tech) {
     return this.onesignalService.pushNotification(body.array, body.title, body.content);
   }
+
 }

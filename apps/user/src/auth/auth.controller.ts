@@ -1,5 +1,5 @@
 import { Public } from '@app/core/decorators/public.decorator';
-import { Body, Controller, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { LoginAuthDto } from './dtos/login.dto';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -19,6 +19,17 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginAuthDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Public()
+  @Get('verify')
+  async verify(@Query('resetToken') resetToken: string) {
+    return this.authService.verifyAccount(resetToken);
+  }
+
+  @Post('send_email_verify')
+  async sendEmailVerify(@AuthUser() { id }) {
+    return this.authService.sendEmailVerify(id);
   }
 
   @Post('change-password')

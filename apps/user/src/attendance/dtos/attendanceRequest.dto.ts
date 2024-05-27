@@ -11,7 +11,7 @@ export class AttendanceRequestDto {
   @ApiProperty({ example: 'Yêu cầu sửa chấm công' })
   content: string;
 
-  @ApiProperty({ example: '2024-05-21 14:28:49 ' })
+  @ApiProperty({ example: '2024-05-21 14:28:49' })
   checkIn: string;
 
   @ApiProperty({ example: '2024-05-21 14:28:49' })
