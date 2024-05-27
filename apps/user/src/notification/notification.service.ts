@@ -21,33 +21,33 @@ export class NotificationService {
         @InjectRepository(Admin)
         private readonly adminRepository: Repository<Admin>,
     ) {}
-    async findAll(id: number, pageIndex: number, pageSize: number) {
+    async findAll(id: number, pageIndex: number, pageSize: number, isRead: number) {
         const params = assignPaging({
             pageIndex: pageIndex,
             pageSize: pageSize,
         });
-        const notification = await this.userNotificationRepository.find({
-            where: {
-                receiverId: id,
-                deletedAt: null,
-            },
-            relations: {
-                notification: true,
-            },
-            skip: params.skip,
-            take: params.pageSize,
-        });
-        const totalNotifications = await this.userNotificationRepository.count({
-            where: {
-                receiverId: id,
-                deletedAt: null,
-            },
-        });
-        const pagingResult = returnPaging(notification, totalNotifications, params);
+        const queryBuilder = this.userNotificationRepository.createQueryBuilder('userNotification')
+            .leftJoinAndSelect('userNotification.notification', 'notification')
+            .where('userNotification.receiverId = :id', { id })
+            .andWhere('userNotification.deletedAt IS NULL');
+
+        if (isRead == 1) {
+            queryBuilder.andWhere('userNotification.isRead = :isRead', { isRead: ReadNotification.READ });
+        } else if (isRead == 0) {
+            queryBuilder.andWhere('userNotification.isRead = :isRead', { isRead: ReadNotification.UNREAD });
+        }
+
+        queryBuilder.skip(params.skip).take(params.pageSize);
+
+        const [notifications, totalNotifications] = await queryBuilder.getManyAndCount();
+
+        const pagingResult = returnPaging(notifications, totalNotifications, params);
+
         return {
             notifications: pagingResult,
         };
     }
+
     async update(id: number, updateData: Partial<User>) {
         const notif = await this.notificationRepository.findOne({
             where: {

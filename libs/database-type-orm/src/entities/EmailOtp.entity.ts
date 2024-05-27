@@ -33,15 +33,15 @@ export class EmailOtp {
   })
   otpCategory: number;
 
+  @Column({ name: 'user_type', type: 'tinyint', comment: '0: user, 1: admin' })
+  userType: number;
+
   @Column({
     name: 'is_current',
     type: 'tinyint',
     default: IsCurrent.IS_CURRENT,
   })
   isCurrent: number;
-
-  @Column({ name: 'user_type', type: 'tinyint', comment: '0: user, 1: admin' })
-  userType: number;
 
   @Column({ name: 'expired_at', type: 'datetime' })
   expiredAt: string;

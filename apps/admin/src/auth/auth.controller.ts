@@ -1,11 +1,9 @@
+
 import { Body, Controller, Param, Post } from '@nestjs/common';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-
 import { LoginDto } from './dtos/Login.dto';
-
-
 import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
 
 class Ref {
@@ -57,4 +55,9 @@ export class AuthController {
   ) {
     return this.authService.resetPassword(body.password, id, admin.email);
   }
+
+  // @Patch('verify')
+  // forgetPassword(@AuthAdmin() admin, @Query('otp') otp: string) {
+  //   return this.authService.verify(admin, otp);
+  // }
 }

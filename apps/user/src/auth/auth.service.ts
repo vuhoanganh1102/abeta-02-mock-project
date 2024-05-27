@@ -18,6 +18,7 @@ import { ResetPasswordDto } from './dtos/resetPassword.dto';
 import { addMinutes, format, subMinutes } from 'date-fns';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { Injectable } from '@nestjs/common';
+import * as process from "process";
 
 @Injectable()
 export class AuthService {
@@ -40,9 +41,9 @@ export class AuthService {
     if (!user) {
       throw new Exception(ErrorCode.Email_Not_Valid);
     }
-    // if (!bcrypt.compareSync(loginDto.password, user.password)) {
-    //   throw new Exception(ErrorCode.Password_Not_Valid);
-    // }
+    if (!bcrypt.compareSync(loginDto.password, user.password)) {
+      throw new Exception(ErrorCode.Password_Not_Valid);
+    }
     return this.generateTokensAndSave(user);
   }
 

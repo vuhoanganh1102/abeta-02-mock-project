@@ -14,10 +14,10 @@ async function bootstrap() {
   app.useLogger(new CustomLogger());
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Mock project')
-    .setDescription('description of the project')
+    .setTitle('Admin CMS - HR management')
+    .setDescription('APIs for Admin')
     .setVersion('1.0')
-    .addTag('Tags')
+    .addTag('Admin')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
