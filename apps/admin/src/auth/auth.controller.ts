@@ -34,7 +34,6 @@ export class AuthController {
   @Post('newToken')
   async resetAccessToken(@Body() obj: Ref) {
     return this.authService.getNewAccessToken(obj.refresh_token);
-    // console.log(obj.refresh_token);
   }
 
   @Public()

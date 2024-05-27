@@ -1,7 +1,6 @@
 import { Client } from 'onesignal-node';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
 import { CreateNotificationBody } from 'onesignal-node/lib/types';
 import * as process from 'process';
 import { IConfig } from 'apps/mock-project/src/config';
@@ -20,7 +19,6 @@ export class OnesignalService {
       process.env.ONESIGNAL_API_KEY,
     );
   }
-
   async pushNotification(
     playerIds: number[],
     title: string,

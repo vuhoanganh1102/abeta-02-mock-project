@@ -147,7 +147,6 @@ export class ManageUserService {
         status: 'Verified',
       };
       // return updateVerify;
-      // console.log(verifyEmail);
     }
     return new HttpException(
       'Verify action is failed. This otp is expired.',
@@ -212,10 +211,13 @@ export class ManageUserService {
         otpCategory,
       });
 
-      const saveCreater = await this.emailRespository.save(createEmail);
-
-      if (saveCreater) {
-        const sendmail = await this.sendGridService.sendMail(
+      if (saveUser.isVerified === 1)
+        return new HttpException(
+          'Account is verified. Please sign in.',
+          HttpStatus.BAD_REQUEST,
+        );
+      if (createEmail) {
+        const send = await this.sendGridService.sendMail(
           receiver,
           subject,
           templateName,
@@ -223,13 +225,14 @@ export class ManageUserService {
             otp: emailOtp,
           },
         );
-        if (sendmail) {
-          return new HttpException('Successfully', HttpStatus.OK);
+        if (send === false) {
+          return {
+            status: 'Please send again after 15 minutes. ',
+          };
+        } else {
+          const saveOtp = await this.emailRespository.save(createEmail);
+          if (saveOtp) return new HttpException('Successfully', HttpStatus.OK);
         }
-        return new HttpException(
-          'Dont send otp. Please try agian.',
-          HttpStatus.BAD_REQUEST,
-        );
       }
     }
     return new HttpException(
