@@ -3,7 +3,12 @@ import { LoginAuthDto } from './dtos/login.dto';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Exception } from '@app/core/exception';
-import { ErrorCode, IsCurrent, OTPCategory } from '@app/core/constants/enum';
+import {
+  ErrorCode,
+  IsCurrent,
+  OTPCategory,
+  VerifiedStatus,
+} from '@app/core/constants/enum';
 import * as bcrypt from 'bcrypt';
 import { JwtAuthenticationService } from '@app/jwt-authentication';
 import { ChangePasswordDto } from './dtos/changePassword.dto';
@@ -39,6 +44,48 @@ export class AuthService {
     //   throw new Exception(ErrorCode.Password_Not_Valid);
     // }
     return this.generateTokensAndSave(user);
+  }
+
+  async sendEmailVerify(userId: number) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new Exception(ErrorCode.User_Not_Found, 'User Not Found');
+    }
+    await this.sendOtp(user, OTPCategory.REGISTER);
+    return {
+      message: 'Check your email',
+    };
+  }
+
+  async verifyAccount(resetToken: string) {
+    const otp = await this.otpRepository
+      .createQueryBuilder('otp')
+      .where('otp.otpCategory = :otpCategory', {
+        otpCategory: OTPCategory.REGISTER,
+      })
+      .andWhere('otp.isCurrent = :isCurrent', {
+        isCurrent: IsCurrent.IS_CURRENT,
+      })
+      .andWhere('otp.otp = :resetToken', { resetToken: resetToken })
+      .andWhere('otp.expiredAt > :now', { now: new Date() })
+      .getOne();
+
+    if (!otp) {
+      throw new Exception(ErrorCode.OTP_Invalid);
+    }
+
+    await this.userRepository.update(otp.userId, {
+      isVerified: VerifiedStatus.VERIFIED,
+    });
+
+    return {
+      message: 'Verify Successfully',
+    };
   }
 
   async changePassword(userId: number, changeDto: ChangePasswordDto) {
@@ -81,14 +128,18 @@ export class AuthService {
   }
 
   async resetPassword(resetToken, resetDto: ResetPasswordDto) {
-    const otp = await this.otpRepository.findOne({
-      where: {
-        otp: resetToken,
-      },
-      select: {
-        userId: true,
-      },
-    });
+    const otp = await this.otpRepository
+      .createQueryBuilder('otp')
+      .where('otp.otpCategory = :otpCategory', {
+        otpCategory: OTPCategory.FORGET_PASSWORD,
+      })
+      .andWhere('otp.isCurrent = :isCurrent', {
+        isCurrent: IsCurrent.IS_CURRENT,
+      })
+      .andWhere('otp.otp = :resetToken', { resetToken: resetToken })
+      .andWhere('otp.expiredAt > :now', { now: new Date() })
+      .getOne();
+
     if (!otp) {
       throw new Exception(ErrorCode.OTP_Invalid);
     }
