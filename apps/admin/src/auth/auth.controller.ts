@@ -1,16 +1,16 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post } from '@nestjs/common';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dtos/login.dto';
-import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
+import { LoginDto } from './dtos/Login.dto';
+import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
 
 class Ref {
   @ApiProperty({ example: '{"refresh_token":}' })
   refresh_token: string;
 }
 class sendLinkMail {
-  @ApiProperty({ example: 'accofcod1102@gmail.com' })
+  @ApiProperty({ example: 'anhvh1102@gmail.com' })
   email: string;
 }
 
@@ -42,21 +42,16 @@ export class AuthController {
     return this.authService.sendMailToRessetPassword(body.email);
   }
 
-  @Get('reset-password-form/:id')
-  async viewToken(@Param('id') id: string) {
-    return { id };
-  }
+  // @Get('reset-password-form/:id')
+  // async viewToken(@Param('id') id: string) {
+  //   return { id };
+  // }
   @Post('reset-password/:id')
   async resetPassword(
     @Body() body: resetPassword,
     @Param('id') id: string,
     @AuthAdmin() admin,
   ) {
-    return this.authService.resetPassword(
-      body.password,
-      id,
-      admin.email,
-      admin.id,
-    );
+    return this.authService.resetPassword(body.password, id, admin.email);
   }
 }
