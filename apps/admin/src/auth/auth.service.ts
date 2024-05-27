@@ -8,7 +8,7 @@ import { JwtAuthenticationService } from '@app/jwt-authentication';
 import * as bcrypt from 'bcrypt';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { SendgridService } from '@app/sendgrid';
-import { LoginDto } from './dtos/login.dto';
+import { LoginDto } from './dtos/Login.dto';
 
 @Injectable()
 export class AuthService {
@@ -146,6 +146,7 @@ export class AuthService {
             email: checkExistEmail.email,
             role: process.env.ADMIN_SECRET_KEY,
           });
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const sendMail = await this.sendGridService.sendMail(
             receiver,
             'Click to link to reset password.',
