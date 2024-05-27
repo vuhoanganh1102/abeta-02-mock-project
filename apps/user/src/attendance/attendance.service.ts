@@ -174,6 +174,10 @@ export class AttendanceService {
     file,
     attendanceRequestDto: AttendanceRequestDto,
   ) {
+    if (format(new Date(), 'yyyy-MM-dd') < attendanceRequestDto.date) {
+      throw new Exception(ErrorCode.Exceeded_Time_Request);
+    }
+
     const attendance = await this.attendanceRepository.findOne({
       where: {
         userId: userId,

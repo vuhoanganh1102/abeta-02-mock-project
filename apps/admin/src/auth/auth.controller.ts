@@ -3,7 +3,7 @@ import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
-import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
+import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
 
 class Ref {
   @ApiProperty({ example: '{"refresh_token":}' })
