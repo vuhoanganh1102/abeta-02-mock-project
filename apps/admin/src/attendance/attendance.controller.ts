@@ -4,7 +4,7 @@ import { AttendanceService } from './attendance.service';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { AttendanceRequestPageDto } from './dtos/attendanceRequestPage.dto';
 import { AttendanceRequestDto } from './dtos/attendanceRequest.dto';
-import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
+import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
 
 @ApiBearerAuth()
 @ApiTags('Attendance')
@@ -14,8 +14,8 @@ export class AttendanceController {
 
   @Get('today')
   getListAttendanceToday(
-      @Query('pageIndex') pageIndex: number,
-      @Query('pageSize') pageSize: number,
+    @Query('pageIndex') pageIndex: number,
+    @Query('pageSize') pageSize: number,
   ) {
     return this.attendanceService.getListAttendanceToday(pageIndex, pageSize);
   }
@@ -67,7 +67,13 @@ export class AttendanceController {
     @Query('pageIndex') pageIndex: number,
     @Query('pageSize') pageSize: number,
   ) {
-    return this.attendanceService.getListAttendanceOfUser(start, end, id, pageIndex, pageSize);
+    return this.attendanceService.getListAttendanceOfUser(
+      start,
+      end,
+      id,
+      pageIndex,
+      pageSize,
+    );
   }
 
   @Post('request')

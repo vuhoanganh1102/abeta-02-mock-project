@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { Attendance } from './Attendance.entity';
 import { VerifiedStatus } from '../../../core/src/constants/enum';
-import { EmailOtp } from './EmailOtp.entity';
+
 import { UserNotification } from './UserNotification.entity';
 
 @Entity('user')
@@ -77,9 +77,6 @@ export class User {
     (user_notification) => user_notification.receiver,
   )
   user_notifications: UserNotification[];
-
-  @OneToMany(() => EmailOtp, (otp) => otp.user)
-  otp: EmailOtp[];
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
   deletedAt: string;
