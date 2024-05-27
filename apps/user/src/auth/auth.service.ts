@@ -12,7 +12,6 @@ import { SendgridService } from '@app/sendgrid';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
 import { addMinutes, format, subMinutes } from 'date-fns';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
-import process from 'process';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -154,12 +153,19 @@ export class AuthService {
   async sendOtp(user: User, otpType: number) {
     //check otp frequency
     const fiveMinutesAgo = subMinutes(new Date(), 5);
+    const fiveMinutesAgoFormat = format(
+      fiveMinutesAgo,
+      'yyyy-MM-dd HH:mm:ss.SSSSSS',
+    );
     const maxOtpInFiveMins = 5;
     const otpCountLastFiveMins = await this.otpRepository
       .createQueryBuilder('otp')
       .where('otp.userId = :userId', { userId: user.id })
-      .andWhere('otp.createdAt > :fiveMinutesAgo', { fiveMinutesAgo })
+      .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
+        fiveMinutesAgoFormat,
+      })
       .getCount();
+
     if (otpCountLastFiveMins >= maxOtpInFiveMins) {
       throw new Exception(ErrorCode.Too_Many_Requests);
     }
@@ -182,7 +188,7 @@ export class AuthService {
 
     //create new otp
     const forgetOtp = this.generateRandomResetToken();
-    const resetLink = process.env.RESET_LINK;
+    const resetLink = process.env.RESET_LINK + `${forgetOtp}`;
     const expiredAt = addMinutes(
       new Date(),
       parseInt(process.env.OTP_EXPIRY_TIME),
@@ -200,7 +206,7 @@ export class AuthService {
 
     await this.otpRepository.save(newOtp);
 
-    //send
+    // send
     await this.sendGridService.sendMail(
       user.email,
       otpType === OTPCategory.REGISTER
