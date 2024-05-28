@@ -40,7 +40,7 @@ export class AuthController {
   @Public()
   @Post('forgot-password-form')
   async sendLinkMail(@Body() body: sendLinkMail) {
-    return this.authService.sendMailToRessetPassword(body.email);
+    return this.authService.sendMailToResetPassword(body.email);
   }
 
   // @Get('reset-password-form/:id')

@@ -63,7 +63,7 @@ export class AuthService {
     };
   }
 
-  async verifyAccount(resetToken: string) {
+  async verifyAccount(token: string) {
     const otp = await this.otpRepository
       .createQueryBuilder('otp')
       .where('otp.otpCategory = :otpCategory', {
@@ -72,7 +72,7 @@ export class AuthService {
       .andWhere('otp.isCurrent = :isCurrent', {
         isCurrent: IsCurrent.IS_CURRENT,
       })
-      .andWhere('otp.otp = :resetToken', { resetToken: resetToken })
+      .andWhere('otp.otp = :token', { token: token })
       .andWhere('otp.expiredAt > :now', { now: new Date() })
       .getOne();
 
@@ -212,7 +212,8 @@ export class AuthService {
     const maxOtpInFiveMins = 5;
     const otpCountLastFiveMins = await this.otpRepository
       .createQueryBuilder('otp')
-      .where('otp.userId = :userId', { userId: user.id })
+      .where('otp.email = :email', { userId: user.email })
+        .andWhere('otp.userType = :userType', { userType: 0 })
       .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
         fiveMinutesAgoFormat,
       })
@@ -224,7 +225,8 @@ export class AuthService {
     //get current otp of user in data
     const otpRecord = await this.otpRepository
       .createQueryBuilder('otp')
-      .where('otp.userId = :userId', { userId: user.id })
+        .where('otp.email = :email', { userId: user.email })
+        .andWhere('otp.userType = :userType', { userType: 0 })
       .andWhere('otp.isCurrent = :isCurrent', {
         isCurrent: IsCurrent.IS_CURRENT,
       })
@@ -239,24 +241,27 @@ export class AuthService {
     }
 
     //create new otp
-    const forgetOtp = this.generateRandomResetToken();
-    const resetLink = process.env.RESET_LINK + `${forgetOtp}`;
+    const otp = this.generateRandomResetToken();
+    const link = otpType === OTPCategory.REGISTER
+        ? process.env.RESET_LINK + `${otp}`
+        : process.env.VERIFY_LINK + `${otp}`;
     const expiredAt = addMinutes(
       new Date(),
       parseInt(process.env.OTP_EXPIRY_TIME),
     );
 
     const expiredAtString = format(expiredAt, 'yyyy-MM-dd HH:mm:ss');
-    const newOtp = this.otpRepository.create({
-      otp: forgetOtp,
+    const newOtpRecord = this.otpRepository.create({
+      otp: otp,
       userId: user.id,
       email: user.email,
       isCurrent: IsCurrent.IS_CURRENT,
       otpCategory: otpType,
       expiredAt: expiredAtString,
+      userType: 0,
     });
 
-    await this.otpRepository.save(newOtp);
+    await this.otpRepository.save(newOtpRecord);
 
     // send
     await this.sendGridService.sendMail(
@@ -265,7 +270,7 @@ export class AuthService {
         ? 'Verify Your Account'
         : 'Reset Your Password',
       otpType === OTPCategory.REGISTER ? './verify' : './reset-password',
-      { resetLink },
+      { link },
     );
     return {
       message: 'Check your email',

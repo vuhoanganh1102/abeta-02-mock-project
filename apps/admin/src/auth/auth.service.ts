@@ -119,7 +119,7 @@ export class AuthService {
     }
   }
 
-  async sendMailToRessetPassword(receiver: string) {
+  async sendMailToResetPassword(receiver: string) {
     try {
       const checkExistEmail = await this.adminRepository.findOne({
         where: { email: receiver },

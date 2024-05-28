@@ -48,27 +48,14 @@ export class NotificationService {
         };
     }
 
-    async update(id: number, updateData: Partial<User>) {
-        const notif = await this.notificationRepository.findOne({
-            where: {
-                id: id,
-                deletedAt: null,
-            },
-        });
-        if (!notif) {
-            throw new Exception(ErrorCode.Notification_Not_Found);
-        }
-        Object.assign(notif, updateData);
-        return this.notificationRepository.update(id, updateData);
-    }
     async delete(id: number) {
-        const notif = await this.notificationRepository.findOne({
+        const notification = await this.notificationRepository.findOne({
             where: {
                 id: id,
                 deletedAt: null,
             },
         });
-        if (!notif) {
+        if (!notification) {
             throw new Exception(ErrorCode.Notification_Not_Found);
         }
         return this.notificationRepository.update(
@@ -77,13 +64,13 @@ export class NotificationService {
         );
     }
     async updateReadStatus(id: number) {
-        const notif = await this.userNotificationRepository.findOne({
+        const notification = await this.userNotificationRepository.findOne({
             where: {
                 id: id,
                 deletedAt: null,
             },
         });
-        if (!notif) {
+        if (!notification) {
             throw new Exception(ErrorCode.Notification_Not_Found);
         }
         return this.userNotificationRepository.update({ id: id }, { isRead: ReadNotification.READ });

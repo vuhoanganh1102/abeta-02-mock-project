@@ -13,6 +13,7 @@ async function bootstrap() {
   });
 
   app.set('trust proxy', 1);
+  app.setGlobalPrefix('api/user');
   app.useLogger(new CustomLogger());
   const configService: ConfigService<IConfig> = app.get(ConfigService);
   const port = configService.get<number>('port', 3002);
