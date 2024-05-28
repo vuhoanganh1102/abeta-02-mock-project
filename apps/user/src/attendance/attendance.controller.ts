@@ -30,7 +30,7 @@ export class AttendanceController {
   }
 
   @ApiOperation({
-    summary: 'Create a new request to change attendance details',
+    summary: 'Create a new request to change attendance details after 24 hours',
     description: 'User creates a new request. This request will be sent to admin'
   })
   @Post('request')

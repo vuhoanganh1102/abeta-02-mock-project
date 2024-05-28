@@ -145,7 +145,6 @@ export class ManageUserService {
   }
 
   async uploadAvatar(file, id: number) {
-    console.log(id)
     const imageUrl = await this.firebaseService.uploadSingleImage(file);
     await this.userRepository.update({ id: id }, { avatar: imageUrl });
     const user = await this.userRepository.findOne({

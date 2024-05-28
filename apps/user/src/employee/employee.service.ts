@@ -12,10 +12,9 @@ export class EmployeeService {
 
   async getListEmployee(name: string) {
     const queryBuilder = await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.isVerified = 1');
+      .createQueryBuilder('user');
     if (name) {
-      queryBuilder.andWhere('user.firstName = :name OR user.lastName = :name', {
+      queryBuilder.where('user.firstName = :name OR user.lastName = :name', {
         name,
       });
     }
