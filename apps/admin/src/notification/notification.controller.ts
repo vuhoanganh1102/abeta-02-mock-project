@@ -1,5 +1,5 @@
 import {Body, Controller, Get, Param, Patch, Post, Query} from '@nestjs/common';
-import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
+import {ApiBearerAuth, ApiOperation, ApiProperty, ApiTags} from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
 import {
   CreateNotificationDto,
@@ -7,27 +7,20 @@ import {
 } from './dtos/createNotification.dto';
 import { Public } from '@app/core/decorators/public.decorator';
 import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
-import {OnesignalService} from "@app/onesignal";
 
-
-class tech {
-  @ApiProperty({ example: '[]' })
-  array: any;
-  @ApiProperty({ example: 'Check title' })
-  title: string;
-  @ApiProperty({ example: 'la la la.' })
-  content: string;
-}
 @ApiBearerAuth()
 @ApiTags('Notification')
 @Controller('notification')
 export class NotificationController {
   constructor(
     private notificationService: NotificationService,
-    private readonly onesignalService: OnesignalService,
   ) {}
 
   @Post('create')
+  @ApiOperation({
+    summary: 'Admin create a new pending notification',
+    description: 'Insert title, content, receiver id and due time for the notification'
+  })
   createNewNotification(
     @AuthAdmin() admin,
     @Body() createDto: CreateNotificationDto,
@@ -37,11 +30,18 @@ export class NotificationController {
 
   @Public()
   @Get('get-one/:id')
+  @ApiOperation({
+    summary: 'Get detail of a notification',
+    description: 'Insert id to get detail'
+  })
   getOneNotification(@Param('id') id: number) {
     return this.notificationService.getOneNotification(id);
   }
 
   @Get('get-list')
+  @ApiOperation({
+    summary: 'Get list of notifications',
+  })
   getListNotification(
       @Query('pageIndex') pageIndex: number,
       @Query('pageSize') pageSize: number,
@@ -50,6 +50,9 @@ export class NotificationController {
   }
 
   @Patch('update/:id')
+  @ApiOperation({
+    summary: 'update details of a notification',
+  })
   updateNotification(
     @Param('id') id: number,
     @Body() updateDto: UpdateNotificationDto,
@@ -58,12 +61,11 @@ export class NotificationController {
   }
 
   @Patch('delete/:id')
+  @ApiOperation({
+    summary: 'delete a notification',
+  })
   deleteNotification(@Param('id') id: number) {
     return this.notificationService.deleteNotification(id);
-  }
-  @Post('/testPush')
-  async pushNotification(@Body() body: tech) {
-    return this.onesignalService.pushNotification(body.array, body.title, body.content);
   }
 
 }

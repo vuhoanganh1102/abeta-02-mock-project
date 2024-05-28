@@ -17,6 +17,7 @@ export class AuthController {
 
   @Public()
   @ApiOperation({
+    summary: 'login for user',
     description: 'insert email and password to login'
   })
   @Post('login')
@@ -82,5 +83,15 @@ export class AuthController {
   })
   refreshToken(@Body() { refreshToken }: refreshTokenDto) {
     return this.authService.refreshTokens(refreshToken);
+  }
+
+  @Public()
+  @Get('reset-password-form/:otp')
+  getResetPasswordOtp(
+      @Param('otp') otp: string,
+  ){
+    return {
+      otp: otp
+    }
   }
 }

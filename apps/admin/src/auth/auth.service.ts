@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Exception } from '@app/core/exception';
-import {ErrorCode, IsCurrent, OTPCategory} from '@app/core/constants/enum';
+import {ErrorCode, IsCurrent, OTPCategory, UserType} from '@app/core/constants/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { Repository } from 'typeorm';
@@ -9,6 +9,8 @@ import * as bcrypt from 'bcrypt';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { SendgridService } from '@app/sendgrid';
 import { LoginDto } from './dtos/Login.dto';
+import {format, subMinutes} from "date-fns";
+require('dotenv').config();
 
 @Injectable()
 export class AuthService {
@@ -119,13 +121,30 @@ export class AuthService {
     }
   }
 
-  async sendMailToResetPassword(receiver: string) {
-    try {
+  async forgotPassword(receiver: string) {
       const checkExistEmail = await this.adminRepository.findOne({
         where: { email: receiver },
       });
-      console.log(checkExistEmail);
       if (checkExistEmail) {
+        //check otp frequency
+        const fiveMinutesAgo = subMinutes(new Date(), 5);
+        const fiveMinutesAgoFormat = format(
+            fiveMinutesAgo,
+            'yyyy-MM-dd HH:mm:ss.SSSSSS',
+        );
+        const maxOtpInFiveMins = 5;
+        const otpCountLastFiveMins = await this.emailRepository
+            .createQueryBuilder('otp')
+            .where('otp.email = :email', { email: receiver })
+            .andWhere('otp.userType = :userType', { userType: UserType.USER })
+            .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
+              fiveMinutesAgoFormat,
+            })
+            .getCount();
+
+        if (otpCountLastFiveMins >= maxOtpInFiveMins) {
+          throw new Exception(ErrorCode.Too_Many_Requests);
+        }
         const emailOtp = await this.sendGridService.generateOtp(10);
         const dateNow = new Date();
         const emailExpire = new Date(dateNow.getTime() + 15 * 60 * 1000);
@@ -136,16 +155,16 @@ export class AuthService {
         const checkIsCurrent = await this.emailRepository.update(
           {
             email: checkExistEmail.email,
-            isCurrent: 1,
+            isCurrent: IsCurrent.IS_CURRENT,
           },
-          { isCurrent: 0 },
+          { isCurrent: IsCurrent.IS_OLD },
         );
         const createEmail = await this.emailRepository.save({
           userId: checkExistEmail.id,
           email: checkExistEmail.email,
           otp: emailOtp,
           expiredAt: emailExpireISO,
-          otpCategory: 2,
+          otpCategory: OTPCategory.FORGET_PASSWORD,
           userType: 1,
         });
 
@@ -153,42 +172,24 @@ export class AuthService {
         // return createEmail;
         if (!saveCreater) return new Error('Please send otp email again.');
         else {
-          const accessToken = await this.jwtService.generateAccessToken({
-            id: checkExistEmail.id,
-            email: checkExistEmail.email,
-            role: process.env.ADMIN_SECRET_KEY,
-          });
           const sendMail = await this.sendGridService.sendMail(
             receiver,
             'Click to link to reset password.',
             'reset-password',
             {
-              resetLink: `http://localhost:3001/reset-password-form/${emailOtp}`,
+              link: `http://localhost:3001/api/admin/auth/reset-password-form/${emailOtp}`,
             },
           );
-          if (sendMail !== false)
             return {
-              accessToken,
+              message: "Check your email",
             };
-
-          // return {
-          //   user: saveUser,
-          //   email: sendMail,
-          // };
         }
       } else return new Exception(ErrorCode.Email_Not_Valid).getResponse();
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
   }
 
-  async resetPassword(password: string, id: string, email: string) {
-    // Tìm kiếm OTP gần đây nhất cho địa chỉ email
+  async resetPassword(password: string, otp: string) {
     const recentOtp = await this.emailRepository.findOne({
-      where: { email, otpCategory: 2, userType: 1, isCurrent: 1 },
+      where: { otp: otp, otpCategory: OTPCategory.FORGET_PASSWORD, userType: UserType.ADMIN, isCurrent: IsCurrent.IS_CURRENT },
     });
     if (!recentOtp)
       return new HttpException(
@@ -198,42 +199,21 @@ export class AuthService {
     else {
       const dateNow = new Date();
       const check = new Date(recentOtp.expiredAt);
-
-      if (recentOtp.otp === id && check >= dateNow) {
+      if (recentOtp.otp === otp && check >= dateNow) {
+        const hashedPassword = await bcrypt.hash(
+            password,
+            parseInt(process.env.BCRYPT_HASH_ROUND),
+        );
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const changePassword = await this.adminRepository.update(
           {
-            email,
+            email: recentOtp.email,
           },
-          { password },
+          { password: hashedPassword },
         );
-
         return new HttpException('Successfully Changed.', HttpStatus.OK);
-
-        return new HttpException(
-          'Change pass fail, please try.',
-          HttpStatus.BAD_REQUEST,
-        );
       }
       return new HttpException('Dont change.', HttpStatus.BAD_REQUEST);
     }
   }
-
-  // async verify(admin: Admin, otp: string){
-  //   const otpObject = await this.emailRepository
-  //       .createQueryBuilder('otp')
-  //       .where('otp.otp = :otp', { otp: otp })
-  //       .andWhere('otp.isCurrent = :isCurrent', {
-  //         isCurrent: IsCurrent.IS_CURRENT,
-  //       })
-  //       .andWhere('otp.category = :otpType', {
-  //         otpType: OTPCategory.REGISTER,
-  //       })
-  //       .andWhere('otp.expiredAt > :now', { now: new Date() })
-  //       .getOne();
-  //   if (!otpObject) {
-  //     throw new Exception(ErrorCode.OTP_Invalid);
-  //   }
-  //   const
-  // }
 }

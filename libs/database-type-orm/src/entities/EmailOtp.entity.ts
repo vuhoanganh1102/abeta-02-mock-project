@@ -29,7 +29,7 @@ export class EmailOtp {
   @Column({
     name: 'otp_category',
     type: 'tinyint',
-    comment: '1: verify otp, 2: reset password otp',
+    comment: '0: verify otp, 1: reset password otp',
   })
   otpCategory: number;
 

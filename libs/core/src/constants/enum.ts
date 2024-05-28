@@ -67,9 +67,8 @@ export enum Environment {
 }
 
 export enum UserType {
-  CLIENT = 'CLIENT',
-  ADMIN = 'ADMIN',
-  SUPER_ADMIN = 'SUPER_ADMIN',
+  USER = 0,
+  ADMIN = 1,
 }
 
 export enum TokenType {
