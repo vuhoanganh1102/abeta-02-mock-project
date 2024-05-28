@@ -48,10 +48,9 @@ export class SendgridService {
       html: html,
     };
     try {
-        const info = await sendGrid.send(mail);
-        this.logger.log(`Email sent! Info: ${info}`);
-      }
-     catch (error) {
+      const info = await sendGrid.send(mail);
+      this.logger.log(`Email sent! Info: ${info}`);
+    } catch (error) {
       this.logger.log('Send mail failed!: ', error.response.body);
     }
   }

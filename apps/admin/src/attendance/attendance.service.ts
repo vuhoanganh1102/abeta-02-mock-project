@@ -48,7 +48,7 @@ export class AttendanceService {
         date: format(new Date(), 'yyyy-MM-dd'),
       },
       skip: params.skip,
-      take: params.pageSize
+      take: params.pageSize,
     });
     const totalAttendances = await this.attendanceRepository.count({
       where: {
@@ -57,7 +57,7 @@ export class AttendanceService {
     });
     return {
       attendances: returnPaging(attendances, totalAttendances, params),
-    }
+    };
   }
 
   async getListAttendanceInADay(date: string) {
@@ -74,7 +74,13 @@ export class AttendanceService {
     });
   }
 
-  async getListAttendanceOfUser(start: string, end: string, id: number, pageIndex: number, pageSize: number) {
+  async getListAttendanceOfUser(
+    start: string,
+    end: string,
+    id: number,
+    pageIndex: number,
+    pageSize: number,
+  ) {
     const params = assignPaging({
       pageIndex: pageIndex,
       pageSize: pageSize,
@@ -84,15 +90,15 @@ export class AttendanceService {
       .where('attendance.date >= :start', { start })
       .andWhere('attendance.date <= :end', { end })
       .skip(params.skip)
-        .take(params.pageSize);
+      .take(params.pageSize);
     if (id) {
       queryBuilder.andWhere('attendance.userId = :id', { id });
     }
     const attendances = await queryBuilder.getMany();
     const totalAttendances = await queryBuilder.getCount();
     return {
-      attendances: returnPaging(attendances, totalAttendances, params)
-    }
+      attendances: returnPaging(attendances, totalAttendances, params),
+    };
   }
 
   async getListRequestAttendanceOfUser(

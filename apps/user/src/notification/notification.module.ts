@@ -9,12 +9,12 @@ import { NotificationController } from './notification.controller';
 import { OnesignalModule } from '@app/onesignal';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Notification, UserNotification, Admin, User]),
-        OnesignalModule,
-    ],
-    exports: [NotificationService],
-    controllers: [NotificationController],
-    providers: [NotificationService],
+  imports: [
+    TypeOrmModule.forFeature([Notification, UserNotification, Admin, User]),
+    OnesignalModule,
+  ],
+  exports: [NotificationService],
+  controllers: [NotificationController],
+  providers: [NotificationService],
 })
 export class NotificationModule {}

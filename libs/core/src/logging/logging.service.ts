@@ -1,4 +1,4 @@
-import { Logger, ConsoleLogger } from '@nestjs/common';
+import { ConsoleLogger } from '@nestjs/common';
 import { getLogger } from 'log4js';
 
 export class CustomLogger extends ConsoleLogger {

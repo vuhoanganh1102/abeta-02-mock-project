@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { SendgridService } from './sendgrid.service';
 import { ConfigurableModuleClass } from '@app/sendgrid/sendgrid.module-definition';
 import { TypeOrmModule } from '@nestjs/typeorm';

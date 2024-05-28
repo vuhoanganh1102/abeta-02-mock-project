@@ -1,7 +1,11 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import {ApiBearerAuth, ApiOperation, ApiQuery, ApiTags} from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
-import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import { AttendanceRequestPageDto } from './dtos/attendanceRequestPage.dto';
 import { AttendanceRequestDto } from './dtos/attendanceRequest.dto';
 import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
@@ -26,7 +30,8 @@ export class AttendanceController {
   @Get('specific-day')
   @ApiOperation({
     summary: 'get all attendance records in a specific day',
-    description: 'insert a day (format YYYY-MM-DD) to see all attendance records in that day'
+    description:
+      'insert a day (format YYYY-MM-DD) to see all attendance records in that day',
   })
   @ApiQuery({
     name: 'date',
@@ -42,7 +47,7 @@ export class AttendanceController {
   @Get('get-one/:id')
   @ApiOperation({
     summary: 'get an attendance record',
-    description: 'insert attendance id to see all details of that attendance'
+    description: 'insert attendance id to see all details of that attendance',
   })
   getOneAttendance(@Param('id') id: number) {
     return this.attendanceService.getOneAttendance(id);
@@ -51,7 +56,8 @@ export class AttendanceController {
   @Get('user/:id')
   @ApiOperation({
     summary: 'get all attendance records of a user with time filter',
-    description: 'insert user id and timeline to see a list of attendance record'
+    description:
+      'insert user id and timeline to see a list of attendance record',
   })
   @ApiQuery({
     name: 'start-date',
@@ -107,7 +113,7 @@ export class AttendanceController {
 
   @ApiOperation({
     summary: 'accept an attendance change request from user',
-    description: 'set the status for that request into Approved'
+    description: 'set the status for that request into Approved',
   })
   @Post('request/accept')
   acceptRequestAttendanceOfUser(@Body() { requestId }: AttendanceRequestDto) {
@@ -116,7 +122,7 @@ export class AttendanceController {
 
   @ApiOperation({
     summary: 'reject an attendance change request from user',
-    description: 'set the status for that request into Denied'
+    description: 'set the status for that request into Denied',
   })
   @Post('request/reject')
   rejectRequestAttendanceOfUser(@Body() { requestId }: AttendanceRequestDto) {

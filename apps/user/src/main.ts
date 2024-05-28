@@ -1,11 +1,9 @@
 import { CustomLogger } from '@app/core/logging/logging.service';
 import { Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { UserModule } from './user.module';
-import { IConfig } from '../../mock-project/src/config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(UserModule, {
@@ -15,8 +13,6 @@ async function bootstrap() {
   app.set('trust proxy', 1);
   app.setGlobalPrefix('api/user');
   app.useLogger(new CustomLogger());
-  const configService: ConfigService<IConfig> = app.get(ConfigService);
-  const port = configService.get<number>('port', 3002);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('User - HR Management')

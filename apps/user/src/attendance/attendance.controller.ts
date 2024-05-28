@@ -8,7 +8,13 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import {ApiBearerAuth, ApiConsumes, ApiOperation, ApiQuery, ApiTags} from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { AttendanceDto } from './dtos/attendance.dto';
 import { AttendanceRequestDto } from './dtos/attendanceRequest.dto';
@@ -22,7 +28,7 @@ export class AttendanceController {
 
   @ApiOperation({
     summary: 'Create a new attendance',
-    description: 'User creates a new attendance for today'
+    description: 'User creates a new attendance for today',
   })
   @Post('create')
   recordAttendance(@AuthUser() { id }) {
@@ -31,7 +37,8 @@ export class AttendanceController {
 
   @ApiOperation({
     summary: 'Create a new request to change attendance details after 24 hours',
-    description: 'User creates a new request. This request will be sent to admin'
+    description:
+      'User creates a new request. This request will be sent to admin',
   })
   @Post('request')
   @ApiConsumes('multipart/form-data')
@@ -50,7 +57,7 @@ export class AttendanceController {
 
   @ApiOperation({
     summary: 'See all requests in a month',
-    description: 'Insert month/year to see all request in that month'
+    description: 'Insert month/year to see all request in that month',
   })
   @Get('request')
   @ApiQuery({
@@ -75,7 +82,7 @@ export class AttendanceController {
 
   @ApiOperation({
     summary: 'See all requests in a month',
-    description: 'Insert month/year to see all request in that month'
+    description: 'Insert month/year to see all request in that month',
   })
   @Post('get-one')
   getAttendance(@AuthUser() { id }, @Body() { date }: AttendanceDto) {
@@ -84,7 +91,8 @@ export class AttendanceController {
 
   @ApiOperation({
     summary: 'See all attendance records in a month',
-    description: 'Insert month/year to see list of all attendance records in that month'
+    description:
+      'Insert month/year to see list of all attendance records in that month',
   })
   @Get('get-list')
   @ApiQuery({

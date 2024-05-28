@@ -1,25 +1,32 @@
-import {Body, Controller, Get, Param, Patch, Post, Query} from '@nestjs/common';
-import {ApiBearerAuth, ApiOperation, ApiProperty, ApiTags} from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
 import {
   CreateNotificationDto,
   UpdateNotificationDto,
 } from './dtos/createNotification.dto';
 import { Public } from '@app/core/decorators/public.decorator';
-import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
+import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
 
 @ApiBearerAuth()
 @ApiTags('Notification')
 @Controller('notification')
 export class NotificationController {
-  constructor(
-    private notificationService: NotificationService,
-  ) {}
+  constructor(private notificationService: NotificationService) {}
 
   @Post('create')
   @ApiOperation({
     summary: 'Admin create a new pending notification',
-    description: 'Insert title, content, receiver id and due time for the notification'
+    description:
+      'Insert title, content, receiver id and due time for the notification',
   })
   createNewNotification(
     @AuthAdmin() admin,
@@ -32,7 +39,7 @@ export class NotificationController {
   @Get('get-one/:id')
   @ApiOperation({
     summary: 'Get detail of a notification',
-    description: 'Insert id to get detail'
+    description: 'Insert id to get detail',
   })
   getOneNotification(@Param('id') id: number) {
     return this.notificationService.getOneNotification(id);
@@ -43,8 +50,8 @@ export class NotificationController {
     summary: 'Get list of notifications',
   })
   getListNotification(
-      @Query('pageIndex') pageIndex: number,
-      @Query('pageSize') pageSize: number,
+    @Query('pageIndex') pageIndex: number,
+    @Query('pageSize') pageSize: number,
   ) {
     return this.notificationService.getListNotification(pageIndex, pageSize);
   }
@@ -67,5 +74,4 @@ export class NotificationController {
   deleteNotification(@Param('id') id: number) {
     return this.notificationService.deleteNotification(id);
   }
-
 }

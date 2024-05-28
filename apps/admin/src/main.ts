@@ -11,7 +11,7 @@ async function bootstrap() {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
   app.set('trust proxy', 1);
-  app.setGlobalPrefix('api/admin')
+  app.setGlobalPrefix('api/admin');
   app.useLogger(new CustomLogger());
 
   const swaggerConfig = new DocumentBuilder()

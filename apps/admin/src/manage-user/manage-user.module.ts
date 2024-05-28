@@ -7,7 +7,7 @@ import { SendgridModule } from '@app/sendgrid/sendgrid.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { IConfig, IConfigSendGrid } from '../config';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
-import {FirebaseUploadModule} from "@app/firebase-upload";
+import { FirebaseUploadModule } from '@app/firebase-upload';
 
 @Module({
   imports: [

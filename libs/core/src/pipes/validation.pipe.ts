@@ -2,7 +2,6 @@ import {
   PipeTransform,
   Injectable,
   UnprocessableEntityException,
-  ArgumentMetadata,
 } from '@nestjs/common';
 import { validate } from '../validate';
 import { AjvSchema } from '@app/core/types/AJVSchema';
@@ -21,13 +20,13 @@ export class ToIntPipe implements PipeTransform {
 }
 @Injectable()
 export class Validate implements PipeTransform {
-  private schemaRef: AjvSchema;
+  private readonly schemaRef: AjvSchema;
 
   constructor(schemaRef: AjvSchema) {
     this.schemaRef = schemaRef;
   }
 
-  transform(value: any, metadata: ArgumentMetadata) {
+  transform(value: any) {
     validate(this.schemaRef, value);
     return value;
   }

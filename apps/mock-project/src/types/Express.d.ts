@@ -1,5 +1,3 @@
-import { AUTH_TYPE } from './enums';
-
 export declare namespace Express {
   export interface Request {
     payload: {

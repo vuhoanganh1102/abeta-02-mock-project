@@ -1,19 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import config, { IConfig, IConfigAuth, IConfigSendGrid } from './config';
+import config, { IConfig, IConfigAuth } from './config';
 import {
   JwtAuthenticationModule,
   // UserGuard
 } from '@app/jwt-authentication';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSource } from '@app/database-type-orm/data-source';
-import { SendgridModule } from '@app/sendgrid';
-import { Admin } from '@app/database-type-orm/entities/Admin.entity';
-import { User } from '@app/database-type-orm/entities/User.entity';
-// import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-// import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
-// import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
-// import { AdminGuard } from '@app/jwt-authentication/admin.guard';
 import { AuthModule } from './auth/auth.module';
 import { ManageUserModule } from './manage-user/manage-user.module';
 import { AttendanceModule } from './attendance/attendance.module';
@@ -22,7 +15,7 @@ import { AdminGuard } from '@app/core/guards/admin.guard';
 import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
 import { ScheduleModule } from '@nestjs/schedule';
-import {NotificationModule} from "./notification/notification.module";
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -30,7 +23,6 @@ import {NotificationModule} from "./notification/notification.module";
       isGlobal: true,
       load: [() => config],
       cache: true,
-      // validate: validateConfig,
     }),
     JwtAuthenticationModule.registerAsync({
       imports: [ConfigModule],
