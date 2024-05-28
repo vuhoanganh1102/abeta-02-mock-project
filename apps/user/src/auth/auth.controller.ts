@@ -2,7 +2,7 @@ import { Public } from '@app/core/decorators/public.decorator';
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { LoginAuthDto } from './dtos/login.dto';
 import { AuthService } from './auth.service';
-import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@app/core/decorators/authUser.decorator';
 import { ChangePasswordDto } from './dtos/changePassword.dto';
 import { ForgetPasswordDto } from './dtos/forgetPassword.dto';
@@ -18,7 +18,7 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'login for user',
-    description: 'insert email and password to login'
+    description: 'insert email and password to login',
   })
   @Post('login')
   async login(@Body() loginDto: LoginAuthDto) {
@@ -28,7 +28,8 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'Verify this account',
-    description: 'Take the link received from email contains a token to verify account'
+    description:
+      'Take the link received from email contains a token to verify account',
   })
   @Get('verify')
   async verify(@Query('token') token: string) {
@@ -37,7 +38,8 @@ export class AuthController {
 
   @ApiOperation({
     summary: 'Send an email contains a link to verify this account',
-    description: 'Create a link contains a token and send to this user through email'
+    description:
+      'Create a link contains a token and send to this user through email',
   })
   @Post('send_email_verify')
   async sendEmailVerify(@AuthUser() { id }) {
@@ -46,7 +48,7 @@ export class AuthController {
 
   @ApiOperation({
     summary: 'Change password for a logged-in user',
-    description: 'Insert old password and new password to change'
+    description: 'Insert old password and new password to change',
   })
   @Post('change-password')
   changePassword(@AuthUser() { id }, @Body() changeDto: ChangePasswordDto) {
@@ -55,8 +57,10 @@ export class AuthController {
 
   @Public()
   @ApiOperation({
-    summary: 'Send an email contains a link to change the password without logging in',
-    description: 'Insert an email. A link contains a token will be created and send to that email'
+    summary:
+      'Send an email contains a link to change the password without logging in',
+    description:
+      'Insert an email. A link contains a token will be created and send to that email',
   })
   @Post('forget-password')
   forgetPassword(@Body() forgetDto: ForgetPasswordDto) {
@@ -66,7 +70,8 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'Reset password with the link received from email',
-    description: 'Take the link received from email contains a token to reset password'
+    description:
+      'Take the link received from email contains a token to reset password',
   })
   @Post('reset-password')
   resetPassword(
@@ -79,7 +84,7 @@ export class AuthController {
   @Put('refresh')
   @ApiOperation({
     summary: 'Get new tokens for authentication',
-    description: 'Insert refresh token to get new access token'
+    description: 'Insert refresh token to get new access token',
   })
   refreshToken(@Body() { refreshToken }: refreshTokenDto) {
     return this.authService.refreshTokens(refreshToken);
@@ -87,11 +92,9 @@ export class AuthController {
 
   @Public()
   @Get('reset-password-form/:otp')
-  getResetPasswordOtp(
-      @Param('otp') otp: string,
-  ){
+  getResetPasswordOtp(@Param('otp') otp: string) {
     return {
-      otp: otp
-    }
+      otp: otp,
+    };
   }
 }

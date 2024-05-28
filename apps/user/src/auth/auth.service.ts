@@ -6,7 +6,8 @@ import { Exception } from '@app/core/exception';
 import {
   ErrorCode,
   IsCurrent,
-  OTPCategory, UserType,
+  OTPCategory,
+  UserType,
   VerifiedStatus,
 } from '@app/core/constants/enum';
 import * as bcrypt from 'bcrypt';
@@ -18,7 +19,7 @@ import { ResetPasswordDto } from './dtos/resetPassword.dto';
 import { addMinutes, format, subMinutes } from 'date-fns';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { Injectable } from '@nestjs/common';
-import * as process from "process";
+import * as process from 'process';
 
 @Injectable()
 export class AuthService {
@@ -213,7 +214,7 @@ export class AuthService {
     const otpCountLastFiveMins = await this.otpRepository
       .createQueryBuilder('otp')
       .where('otp.email = :email', { email: user.email })
-        .andWhere('otp.userType = :userType', { userType: UserType.USER })
+      .andWhere('otp.userType = :userType', { userType: UserType.USER })
       .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
         fiveMinutesAgoFormat,
       })
@@ -225,8 +226,8 @@ export class AuthService {
     //get current otp of user in data
     const otpRecord = await this.otpRepository
       .createQueryBuilder('otp')
-        .where('otp.email = :email', { email: user.email })
-        .andWhere('otp.userType = :userType', { userType: UserType.USER })
+      .where('otp.email = :email', { email: user.email })
+      .andWhere('otp.userType = :userType', { userType: UserType.USER })
       .andWhere('otp.isCurrent = :isCurrent', {
         isCurrent: IsCurrent.IS_CURRENT,
       })
@@ -242,7 +243,8 @@ export class AuthService {
 
     //create new otp
     const otp = this.generateRandomResetToken();
-    const link = otpType === OTPCategory.REGISTER
+    const link =
+      otpType === OTPCategory.REGISTER
         ? process.env.RESET_LINK + `${otp}`
         : process.env.VERIFY_LINK + `${otp}`;
     const expiredAt = addMinutes(

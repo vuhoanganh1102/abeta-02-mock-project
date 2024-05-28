@@ -1,6 +1,11 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
-import {ApiBearerAuth, ApiOperation, ApiQuery, ApiTags} from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @ApiTags('Employee')
@@ -18,7 +23,8 @@ export class EmployeeController {
   })
   @ApiOperation({
     summary: 'Search list of employees by name',
-    description: "Insert name. API will find employees who have either first name or last name matches with the input"
+    description:
+      'Insert name. API will find employees who have either first name or last name matches with the input',
   })
   getListEmployee(@Query('name') name: string) {
     return this.employeeService.getListEmployee(name);
@@ -26,7 +32,7 @@ export class EmployeeController {
 
   @ApiOperation({
     summary: "Get an employee's profile",
-    description: "Insert employee id to get his/her profile"
+    description: 'Insert employee id to get his/her profile',
   })
   @Get('get-one/:id')
   getOneEmployee(@Param('id') id: number) {
