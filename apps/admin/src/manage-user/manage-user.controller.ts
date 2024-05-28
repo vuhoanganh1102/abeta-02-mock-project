@@ -5,25 +5,18 @@ import {
   Body,
   Patch,
   Param,
-  // Delete,
-  UseGuards, UseInterceptors, UploadedFile, Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ManageUserService } from './manage-user.service';
 import { UpdateUserDto } from './dto/UpdateUser.entity';
 import { CreateUserDto } from './dto/CreateUser.entity';
-import {ApiBearerAuth, ApiBody, ApiConsumes, ApiTags} from '@nestjs/swagger';
-import { AdminGuard } from '@app/core/guards/admin.guard';
-// import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
+import {ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags} from '@nestjs/swagger';
 import { SendgridService } from '@app/sendgrid';
-import { Obj } from './dto/SendAgainMail.dto';
-import { otp } from './dto/OtpCheck.entity';
 import {FileInterceptor} from "@nestjs/platform-express";
-import {AuthUser} from "@app/core/decorators/authUser.decorator";
-import {AuthAdmin} from "@app/core/decorators/authAdmin.decorator";
 
 @ApiBearerAuth()
 @ApiTags('Manage user')
-@UseGuards(AdminGuard)
 @Controller('manage-user')
 export class ManageUserController {
   constructor(
@@ -31,31 +24,46 @@ export class ManageUserController {
     private readonly sendgrid: SendgridService,
   ) {}
 
-  // admin lay tat ca user
   @Get('users')
+  @ApiOperation({
+    summary: 'get all users',
+  })
   async getUsers() {
     return this.manageUserService.getUsers();
   }
 
-  // admin xem chi tiet nhan vien
   @Get('detailUser/:id')
+  @ApiOperation({
+    summary: 'get a user detail using id',
+    description: 'insert user id to see all details'
+  })
   async getDetailUser(@Param('id') id: string) {
     return this.manageUserService.getDetailUser(parseInt(id));
   }
 
-  // admin xoa nhan vien
   @Patch('deleteUser/:id')
+  @ApiOperation({
+    summary: 'admin deletes a user',
+    description: 'insert user id to delete'
+  })
   async deletedUser(@Param('id') id: string) {
     return this.manageUserService.deleteUser(parseInt(id));
   }
 
-  // admin sua thong tin nhan vien
   @Patch('updateUser/:id')
+  @ApiOperation({
+    summary: 'admin updates user information',
+    description: 'insert user id and update fields to update'
+  })
   async updateUser(@Param('id') id: string, @Body() updater: UpdateUserDto) {
     return this.manageUserService.updateUser(parseInt(id), updater);
   }
 
   @Post('upload-user-image/:id')
+  @ApiOperation({
+    summary: 'change user profile picture',
+    description: 'Upload a new image to firebase cloud. Get the link from cloud and update profile picture'
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -76,28 +84,12 @@ export class ManageUserController {
     return this.manageUserService.uploadAvatar(file, id);
   }
 
-  // api gui lai opt email de xac nhan tao tai khoan cho nguoi dung khi email
-  // @Public()
-  @Post('re-send-email')
-  async sendEmail(@Body() body: Obj) {
-    return this.manageUserService.sendAgainEmail(
-      body.receiver,
-      body.subject,
-      body.templateName,
-    );
+  @Post('create-user')
+  @ApiOperation({
+    summary: 'create new user by email and send verify link to that email',
+    description: 'Insert new email and password to create'
+  })
+  async createUser(@Body() createDto: CreateUserDto) {
+    return this.manageUserService.createUser(createDto);
   }
-
-  // api tao tai khoan cho nhan vien trong do cos guir email de xac nhan
-  // @Public()
-  @Post('createuser')
-  async createUser(@Body() body: CreateUserDto) {
-    return this.manageUserService.createUser(body);
-  }
-
-  // @Public()
-  // async userSendEmail(@Body() body:){
-
-  // }
-
-
 }

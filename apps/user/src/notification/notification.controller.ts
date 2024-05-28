@@ -35,7 +35,7 @@ export class NotificationController {
 
     @ApiOperation({
         description: 'insert notification id to delete it',
-        summary: 'delete a notification'
+        summary: 'delete a notification only on user side'
     })
     @Delete('delete/:id')
     async delete(@Param('id') id: number) {

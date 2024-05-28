@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import config, { IConfig, IConfigAuth, IConfigSendGrid } from './config';
@@ -54,7 +52,7 @@ import { NotificationModule } from './notification/notification.module';
     EmployeeModule,
     NotificationModule,
   ],
-  controllers: [UserController],
+  controllers: [],
   providers: [
     {
       provide: APP_GUARD,
@@ -68,7 +66,6 @@ import { NotificationModule } from './notification/notification.module';
       provide: APP_INTERCEPTOR,
       useClass: TransformResponseInterceptor,
     },
-    UserService,
   ],
 })
 export class UserModule {}

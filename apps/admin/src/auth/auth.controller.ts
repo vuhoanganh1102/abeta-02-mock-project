@@ -1,12 +1,11 @@
-
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import {Body, Controller, Get, Param, Post} from '@nestjs/common';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
-import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
+import {ApiBearerAuth, ApiOperation, ApiProperty, ApiTags} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/Login.dto';
 import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
 
-class Ref {
+class RefreshToken {
   @ApiProperty({ example: '{"refresh_token":}' })
   refresh_token: string;
 }
@@ -27,37 +26,54 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @ApiOperation({
+    summary: 'login for admin',
+    description: 'insert email and password to login'
+  })
   async signIn(@Body() loginDto: LoginDto) {
     return this.authService.loginAdmin(loginDto);
   }
 
   @Public()
   @Post('newToken')
-  async resetAccessToken(@Body() obj: Ref) {
-    return this.authService.getNewAccessToken(obj.refresh_token);
+  @ApiOperation({
+    summary: 'Get a new access token using refresh token',
+    description: 'insert refresh token'
+  })
+  async resetAccessToken(@Body() refreshToken: RefreshToken) {
+    return this.authService.getNewAccessToken(refreshToken.refresh_token);
   }
 
   @Public()
-  @Post('forgot-password-form')
-  async sendLinkMail(@Body() body: sendLinkMail) {
-    return this.authService.sendMailToResetPassword(body.email);
+  @Post('forgot-password')
+  @ApiOperation({
+    summary: 'Send an email contains a link to change the password without logging in',
+    description: 'Insert an email. A link contains a token will be created and send to that email'
+  })
+  async forgotPassword(@Body() sendLinkMail: sendLinkMail) {
+    return this.authService.forgotPassword(sendLinkMail.email);
   }
 
-  // @Get('reset-password-form/:id')
-  // async viewToken(@Param('id') id: string) {
-  //   return { id };
-  // }
-  @Post('reset-password/:id')
+  @Public()
+  @Post('reset-password/:otp')
+  @ApiOperation({
+    summary: 'Reset password with the link received from email',
+    description: 'Take the link received from email contains a token to reset password'
+  })
   async resetPassword(
-    @Body() body: resetPassword,
-    @Param('id') id: string,
-    @AuthAdmin() admin,
+    @Body() resetPassword: resetPassword,
+    @Param('otp') otp: string,
   ) {
-    return this.authService.resetPassword(body.password, id, admin.email);
+    return this.authService.resetPassword(resetPassword.password, otp);
   }
 
-  // @Patch('verify')
-  // forgetPassword(@AuthAdmin() admin, @Query('otp') otp: string) {
-  //   return this.authService.verify(admin, otp);
-  // }
+  @Public()
+  @Get('reset-password-form/:otp')
+  getResetPasswordOtp(
+      @Param('otp') otp: string,
+  ){
+    return {
+      otp: otp
+    }
+  }
 }

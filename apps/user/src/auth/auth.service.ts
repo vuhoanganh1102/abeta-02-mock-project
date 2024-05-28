@@ -6,7 +6,7 @@ import { Exception } from '@app/core/exception';
 import {
   ErrorCode,
   IsCurrent,
-  OTPCategory,
+  OTPCategory, UserType,
   VerifiedStatus,
 } from '@app/core/constants/enum';
 import * as bcrypt from 'bcrypt';
@@ -212,8 +212,8 @@ export class AuthService {
     const maxOtpInFiveMins = 5;
     const otpCountLastFiveMins = await this.otpRepository
       .createQueryBuilder('otp')
-      .where('otp.email = :email', { userId: user.email })
-        .andWhere('otp.userType = :userType', { userType: 0 })
+      .where('otp.email = :email', { email: user.email })
+        .andWhere('otp.userType = :userType', { userType: UserType.USER })
       .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
         fiveMinutesAgoFormat,
       })
@@ -225,8 +225,8 @@ export class AuthService {
     //get current otp of user in data
     const otpRecord = await this.otpRepository
       .createQueryBuilder('otp')
-        .where('otp.email = :email', { userId: user.email })
-        .andWhere('otp.userType = :userType', { userType: 0 })
+        .where('otp.email = :email', { email: user.email })
+        .andWhere('otp.userType = :userType', { userType: UserType.USER })
       .andWhere('otp.isCurrent = :isCurrent', {
         isCurrent: IsCurrent.IS_CURRENT,
       })
@@ -258,7 +258,7 @@ export class AuthService {
       isCurrent: IsCurrent.IS_CURRENT,
       otpCategory: otpType,
       expiredAt: expiredAtString,
-      userType: 0,
+      userType: UserType.USER,
     });
 
     await this.otpRepository.save(newOtpRecord);
