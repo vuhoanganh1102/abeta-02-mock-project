@@ -33,22 +33,28 @@ export class NotificationController {
         return this.notificationService.findAll(id, pageIndex, pageSize, isRead);
     }
 
-    @ApiBody({ schema: { type: 'object', properties: {} } })
-    @Patch('update/:id')
-    async update(@Param('id') id: number, @Body() updateData: Partial<User>) {
-        return this.notificationService.update(id, updateData);
-    }
-
+    @ApiOperation({
+        description: 'insert notification id to delete it',
+        summary: 'delete a notification'
+    })
     @Delete('delete/:id')
     async delete(@Param('id') id: number) {
         return this.notificationService.delete(id);
     }
 
+    @ApiOperation({
+        summary: 'mark a notification as read',
+        description: 'insert notification id to change its status from unread to read'
+    })
     @Patch('read-one/:id')
     async readNotification(@Param('id') id: number) {
         return this.notificationService.updateReadStatus(id);
     }
 
+    @ApiOperation({
+        summary: 'mark all notifications as read',
+        description: "change all notifications' status from unread to read"
+    })
     @Patch('read-all')
     async readAllNotification(@AuthUser() { id }) {
         return this.notificationService.readAllNotification(id);
