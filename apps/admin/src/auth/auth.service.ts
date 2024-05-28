@@ -1,6 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Exception } from '@app/core/exception';
-import {ErrorCode, IsCurrent, OTPCategory} from '@app/core/constants/enum';
+import {
+  ErrorCode,
+  //  IsCurrent, OTPCategory
+} from '@app/core/constants/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { Repository } from 'typeorm';
@@ -8,7 +11,7 @@ import { JwtAuthenticationService } from '@app/jwt-authentication';
 import * as bcrypt from 'bcrypt';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { SendgridService } from '@app/sendgrid';
-import { LoginDto } from './dtos/Login.dto';
+import { LoginDto } from './dtos/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -126,7 +129,7 @@ export class AuthService {
       });
       console.log(checkExistEmail);
       if (checkExistEmail) {
-        const emailOtp = await this.sendGridService.generateOtp(10);
+        const emailOtp = await this.sendGridService.generateOtp(20);
         const dateNow = new Date();
         const emailExpire = new Date(dateNow.getTime() + 15 * 60 * 1000);
         const emailExpireISO = new Date(
@@ -170,7 +173,9 @@ export class AuthService {
             return {
               accessToken,
             };
-
+          return {
+            status: 'Please wait after 5 minutes.',
+          };
           // return {
           //   user: saveUser,
           //   email: sendMail,
@@ -208,7 +213,8 @@ export class AuthService {
           { password },
         );
 
-        return new HttpException('Successfully Changed.', HttpStatus.OK);
+        if (changePassword)
+          return new HttpException('Successfully Changed.', HttpStatus.OK);
 
         return new HttpException(
           'Change pass fail, please try.',
