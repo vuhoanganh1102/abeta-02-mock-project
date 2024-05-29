@@ -211,7 +211,8 @@ export class AuthService {
     const maxOtpInFiveMins = 5;
     const otpCountLastFiveMins = await this.otpRepository
       .createQueryBuilder('otp')
-      .where('otp.userId = :userId', { userId: user.id })
+      .where('otp.email = :email', { userId: user.email })
+      .andWhere('otp.userType = :userType', { userType: 0 })
       .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
         fiveMinutesAgoFormat,
       })
@@ -223,7 +224,8 @@ export class AuthService {
     //get current otp of user in data
     const otpRecord = await this.otpRepository
       .createQueryBuilder('otp')
-      .where('otp.userId = :userId', { userId: user.id })
+      .where('otp.email = :email', { userId: user.email })
+      .andWhere('otp.userType = :userType', { userType: 0 })
       .andWhere('otp.isCurrent = :isCurrent', {
         isCurrent: IsCurrent.IS_CURRENT,
       })
