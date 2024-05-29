@@ -47,6 +47,8 @@ export class AuthService {
         role: process.env.ADMIN_SECRET_KEY,
         resetToken: member.resetToken,
       };
+      // const refresh_token = await this.jwtService.generateRefreshToken(payload);
+      // console.log(refresh_token);
       if (checkPassword) {
         // generate access token moi
         const access_token = await this.jwtService.generateAccessToken(payload);

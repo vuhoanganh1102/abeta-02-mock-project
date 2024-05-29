@@ -44,8 +44,10 @@ export class AttendanceService {
 
   async recordAttendance(userId: number) {
     if (
-      this.parseTimeToSeconds(format(new Date(), 'HH:mm:ss')) >
-      this.parseTimeToSeconds(this.companyConfig.endTime)
+      this.compareSmallerTime(
+        this.companyConfig.endTime,
+        format(new Date(), 'HH:mm:ss'),
+      )
     ) {
       throw new Exception(ErrorCode.Exceeded_Time_Attendance);
     }
@@ -64,12 +66,12 @@ export class AttendanceService {
           this.companyConfig.morningEndTime,
         )
       ) {
-        lateTime = +this.calculateTimeToMinutes(
+        lateTime = this.calculateTimeToMinutes(
           this.companyConfig.morningStartTime,
           format(checkIn, 'HH:mm:ss'),
         );
       } else {
-        lateTime = +this.calculateTimeToMinutes(
+        lateTime = this.calculateTimeToMinutes(
           this.companyConfig.afternoonStartTime,
           format(checkIn, 'HH:mm:ss'),
         );
@@ -88,12 +90,13 @@ export class AttendanceService {
         date: date,
         checkIn: format(checkIn, 'yyyy-MM-dd HH:mm:ss'),
         lateTime: lateTime,
+        status: AttendanceStatus.PENDING,
       };
     }
 
     if (attendance) {
       const checkOut = new Date();
-      let workHours;
+      let workHours, workMinutes;
 
       if (
         this.compareSmallerTime(
@@ -105,11 +108,16 @@ export class AttendanceService {
           this.companyConfig.afternoonStartTime,
         )
       ) {
-        const workHoursMorning = +this.calculateTimeToHours(
+        const workHoursMorning = this.calculateTimeToHours(
+          format(attendance.checkIn, 'HH:mm:ss'),
+          format(checkOut, 'HH:mm:ss'),
+        );
+        const workMinutesMorning = this.calculateTimeToMinutes(
           format(attendance.checkIn, 'HH:mm:ss'),
           format(checkOut, 'HH:mm:ss'),
         );
         workHours = workHoursMorning;
+        workMinutes = workMinutesMorning;
       }
 
       if (
@@ -117,40 +125,57 @@ export class AttendanceService {
           format(attendance.checkIn, 'HH:mm:ss'),
           this.companyConfig.morningEndTime,
         ) &&
-        !this.compareSmallerTime(
-          format(checkOut, 'HH:mm:ss'),
+        this.compareSmallerTime(
           this.companyConfig.afternoonStartTime,
+          format(checkOut, 'HH:mm:ss'),
         )
       ) {
-        const workHoursMorning = +this.calculateTimeToHours(
+        const workHoursMorning = this.calculateTimeToHours(
           format(attendance.checkIn, 'HH:mm:ss'),
           this.companyConfig.morningEndTime,
         );
-        const workHoursAfternoon = +this.calculateTimeToHours(
+        const workHoursAfternoon = this.calculateTimeToHours(
+          this.companyConfig.afternoonStartTime,
+          format(checkOut, 'HH:mm:ss'),
+        );
+
+        const workMinutesMorning = this.calculateTimeToMinutes(
+          format(attendance.checkIn, 'HH:mm:ss'),
+          this.companyConfig.morningEndTime,
+        );
+        const workMinutesAfternoon = this.calculateTimeToMinutes(
           this.companyConfig.afternoonStartTime,
           format(checkOut, 'HH:mm:ss'),
         );
 
         workHours = workHoursMorning + workHoursAfternoon;
+        workMinutes = workMinutesMorning + workMinutesAfternoon;
       }
 
       if (
-        !this.compareSmallerTime(
-          format(attendance.checkIn, 'HH:mm:ss'),
+        this.compareSmallerTime(
           this.companyConfig.morningEndTime,
+          format(attendance.checkIn, 'HH:mm:ss'),
         )
       ) {
-        const workHoursAfternoon = +this.calculateTimeToHours(
+        const workHoursAfternoon = this.calculateTimeToHours(
+          format(attendance.checkIn, 'HH:mm:ss'),
+          format(checkOut, 'HH:mm:ss'),
+        );
+
+        const workMinutesAfternoon = this.calculateTimeToMinutes(
           format(attendance.checkIn, 'HH:mm:ss'),
           format(checkOut, 'HH:mm:ss'),
         );
         workHours = workHoursAfternoon;
+        workMinutes = workMinutesAfternoon;
       }
 
       await this.attendanceRepository.update(attendance.id, {
         userId: userId,
         checkOut: format(checkOut, 'yyyy-MM-dd HH:mm:ss'),
         workHours: workHours,
+        workMinutes: workMinutes,
         status: AttendanceStatus.ACTIVE,
       });
 
@@ -158,6 +183,8 @@ export class AttendanceService {
         userId: userId,
         checkOut: format(checkOut, 'yyyy-MM-dd HH:mm:ss'),
         workHours: workHours,
+        workMinutes: workMinutes,
+        status: AttendanceStatus.ACTIVE,
       };
     }
   }
@@ -199,7 +226,7 @@ export class AttendanceService {
       let attendanceId;
 
       if (!attendance) {
-        let lateTime, workHours;
+        let lateTime, workHours, workMinutes;
         if (
           this.compareSmallerTime(
             format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
@@ -214,11 +241,16 @@ export class AttendanceService {
             this.companyConfig.morningStartTime,
             format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           );
-          const workHoursMorning = +this.calculateTimeToHours(
+          const workHoursMorning = this.calculateTimeToHours(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+          );
+          const workMinutesMorning = this.calculateTimeToMinutes(
             format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
             format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
           );
           workHours = workHoursMorning;
+          workMinutes = workMinutesMorning;
         }
 
         if (
@@ -226,51 +258,67 @@ export class AttendanceService {
             format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
             this.companyConfig.morningEndTime,
           ) &&
-          !this.compareSmallerTime(
-            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+          this.compareSmallerTime(
             this.companyConfig.afternoonStartTime,
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
           )
         ) {
           lateTime = this.calculateTimeToMinutes(
             this.companyConfig.morningStartTime,
             format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           );
-          const workHoursMorning = +this.calculateTimeToHours(
+          const workHoursMorning = this.calculateTimeToHours(
             format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
             this.companyConfig.morningEndTime,
           );
-          const workHoursAfternoon = +this.calculateTimeToHours(
+          const workHoursAfternoon = this.calculateTimeToHours(
+            this.companyConfig.afternoonStartTime,
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+          );
+
+          const workMinutesMorning = this.calculateTimeToMinutes(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            this.companyConfig.morningEndTime,
+          );
+          const workMinutesAfternoon = this.calculateTimeToMinutes(
             this.companyConfig.afternoonStartTime,
             format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
           );
 
           workHours = workHoursMorning + workHoursAfternoon;
+          workMinutes = workMinutesMorning + workMinutesAfternoon;
         }
 
         if (
-          !this.compareSmallerTime(
-            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+          this.compareSmallerTime(
             this.companyConfig.morningEndTime,
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           )
         ) {
           lateTime = this.calculateTimeToMinutes(
             this.companyConfig.afternoonStartTime,
             format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
           );
-          const workHoursAfternoon = +this.calculateTimeToHours(
+          const workHoursAfternoon = this.calculateTimeToHours(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+          );
+          const workMinutesAfternoon = this.calculateTimeToMinutes(
             format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
             format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
           );
           workHours = workHoursAfternoon;
+          workMinutes = workMinutesAfternoon;
         }
 
-        const result = await requestRepo.save({
+        const result = await attendanceRepo.save({
           userId: userId,
           date: attendanceRequestDto.date,
           checkIn: attendanceRequestDto.checkIn,
           checkOut: attendanceRequestDto.checkOut,
           lateTime: lateTime,
           workHours: workHours,
+          workMinutes: workMinutes,
           status: AttendanceStatus.PENDING,
         });
 
@@ -332,19 +380,19 @@ export class AttendanceService {
       .getMany();
   }
 
-  private calculateTimeToHours(startTime: string, endTime: string): string {
+  private calculateTimeToHours(startTime: string, endTime: string): number {
     const currentTimeInSeconds = this.parseTimeToSeconds(startTime);
     const endTimeInSeconds = this.parseTimeToSeconds(endTime);
     const seconds = endTimeInSeconds - currentTimeInSeconds;
-    if (seconds < 0) return '0';
+    if (seconds < 0) return 0;
     return this.formatTimeToHours(seconds);
   }
 
-  private calculateTimeToMinutes(startTime: string, endTime: string): string {
+  private calculateTimeToMinutes(startTime: string, endTime: string): number {
     const currentTimeInSeconds = this.parseTimeToSeconds(startTime);
     const endTimeInSeconds = this.parseTimeToSeconds(endTime);
     const seconds = endTimeInSeconds - currentTimeInSeconds;
-    if (seconds < 0) return '0';
+    if (seconds < 0) return 0;
     return this.formatTimeToMinutes(seconds);
   }
 
@@ -353,16 +401,15 @@ export class AttendanceService {
     return hours * 3600 + minutes * 60 + seconds;
   }
 
-  private formatTimeToMinutes(seconds: number): string {
+  private formatTimeToMinutes(seconds: number): number {
     const minutes = Math.floor(seconds / 60);
 
-    return `${minutes}`;
+    return minutes;
   }
 
-  private formatTimeToHours(seconds: number): string {
-    const hours = Math.floor(seconds / 3600);
-
-    return `${hours}`;
+  private formatTimeToHours(seconds: number): number {
+    const hours = seconds / 3600;
+    return +hours.toFixed(2); // This will format the number to 2 decimal places
   }
 
   private formatTime(seconds: number): string {
