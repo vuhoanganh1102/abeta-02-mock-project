@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { Attendance } from '@app/database-type-orm/entities/Attendance.entity';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
@@ -29,6 +29,8 @@ export class AttendanceService {
     private readonly requestAdminRepository: Repository<RequestAdmin>,
     @InjectRepository(Request)
     private readonly requestRepository: Repository<Request>,
+    @InjectDataSource()
+    private dataSource: DataSource,
   ) {}
 
   private companyConfig = {
@@ -48,7 +50,7 @@ export class AttendanceService {
         date: format(new Date(), 'yyyy-MM-dd'),
       },
       skip: params.skip,
-      take: params.pageSize
+      take: params.pageSize,
     });
     const totalAttendances = await this.attendanceRepository.count({
       where: {
@@ -57,7 +59,7 @@ export class AttendanceService {
     });
     return {
       attendances: returnPaging(attendances, totalAttendances, params),
-    }
+    };
   }
 
   async getListAttendanceInADay(date: string) {
@@ -74,7 +76,13 @@ export class AttendanceService {
     });
   }
 
-  async getListAttendanceOfUser(start: string, end: string, id: number, pageIndex: number, pageSize: number) {
+  async getListAttendanceOfUser(
+    start: string,
+    end: string,
+    id: number,
+    pageIndex: number,
+    pageSize: number,
+  ) {
     const params = assignPaging({
       pageIndex: pageIndex,
       pageSize: pageSize,
@@ -84,15 +92,15 @@ export class AttendanceService {
       .where('attendance.date >= :start', { start })
       .andWhere('attendance.date <= :end', { end })
       .skip(params.skip)
-        .take(params.pageSize);
+      .take(params.pageSize);
     if (id) {
       queryBuilder.andWhere('attendance.userId = :id', { id });
     }
     const attendances = await queryBuilder.getMany();
     const totalAttendances = await queryBuilder.getCount();
     return {
-      attendances: returnPaging(attendances, totalAttendances, params)
-    }
+      attendances: returnPaging(attendances, totalAttendances, params),
+    };
   }
 
   async getListRequestAttendanceOfUser(
@@ -156,87 +164,92 @@ export class AttendanceService {
 
     if (!request) throw new Exception(ErrorCode.Attendance_Request_Not_Found);
 
-    await this.requestRepository.update(requestId, {
-      status: RequestStatus.APPROVED,
+    return this.dataSource.transaction(async (manager) => {
+      const attendanceRepo = manager.getRepository(Attendance);
+      const requestRepo = manager.getRepository(Request);
+
+      await requestRepo.update(requestId, {
+        status: RequestStatus.APPROVED,
+      });
+
+      let lateTime, workHours;
+
+      if (
+        this.compareSmallerTime(
+          format(request.checkIn, 'HH:mm:ss'),
+          this.companyConfig.morningEndTime,
+        ) &&
+        this.compareSmallerTime(
+          format(request.checkOut, 'HH:mm:ss'),
+          this.companyConfig.afternoonStartTime,
+        )
+      ) {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.morningStartTime,
+          format(request.checkIn, 'HH:mm:ss'),
+        );
+        const workHoursMorning = +this.calculateTimeToHours(
+          format(request.checkIn, 'HH:mm:ss'),
+          format(request.checkOut, 'HH:mm:ss'),
+        );
+        workHours = workHoursMorning;
+      }
+
+      if (
+        this.compareSmallerTime(
+          format(request.checkIn, 'HH:mm:ss'),
+          this.companyConfig.morningEndTime,
+        ) &&
+        !this.compareSmallerTime(
+          format(request.checkOut, 'HH:mm:ss'),
+          this.companyConfig.afternoonStartTime,
+        )
+      ) {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.morningStartTime,
+          format(request.checkIn, 'HH:mm:ss'),
+        );
+        const workHoursMorning = +this.calculateTimeToHours(
+          format(request.checkIn, 'HH:mm:ss'),
+          this.companyConfig.morningEndTime,
+        );
+        const workHoursAfternoon = +this.calculateTimeToHours(
+          this.companyConfig.afternoonStartTime,
+          format(request.checkOut, 'HH:mm:ss'),
+        );
+
+        workHours = workHoursMorning + workHoursAfternoon;
+      }
+
+      if (
+        !this.compareSmallerTime(
+          format(request.checkIn, 'HH:mm:ss'),
+          this.companyConfig.morningEndTime,
+        )
+      ) {
+        lateTime = this.calculateTimeToMinutes(
+          this.companyConfig.afternoonStartTime,
+          format(request.checkIn, 'HH:mm:ss'),
+        );
+        const workHoursAfternoon = +this.calculateTimeToHours(
+          format(request.checkIn, 'HH:mm:ss'),
+          format(request.checkOut, 'HH:mm:ss'),
+        );
+        workHours = workHoursAfternoon;
+      }
+
+      await attendanceRepo.update(request.attendanceId, {
+        checkIn: request.checkIn,
+        checkOut: request.checkOut,
+        lateTime: lateTime,
+        workHours: workHours,
+        status: AttendanceStatus.ACTIVE,
+      });
+
+      return {
+        message: 'success',
+      };
     });
-
-    let lateTime, workHours;
-
-    if (
-      this.compareSmallerTime(
-        format(request.checkIn, 'HH:mm:ss'),
-        this.companyConfig.morningEndTime,
-      ) &&
-      this.compareSmallerTime(
-        format(request.checkOut, 'HH:mm:ss'),
-        this.companyConfig.afternoonStartTime,
-      )
-    ) {
-      lateTime = this.calculateTimeToMinutes(
-        this.companyConfig.morningStartTime,
-        format(request.checkIn, 'HH:mm:ss'),
-      );
-      const workHoursMorning = +this.calculateTimeToHours(
-        format(request.checkIn, 'HH:mm:ss'),
-        format(request.checkOut, 'HH:mm:ss'),
-      );
-      workHours = workHoursMorning;
-    }
-
-    if (
-      this.compareSmallerTime(
-        format(request.checkIn, 'HH:mm:ss'),
-        this.companyConfig.morningEndTime,
-      ) &&
-      !this.compareSmallerTime(
-        format(request.checkOut, 'HH:mm:ss'),
-        this.companyConfig.afternoonStartTime,
-      )
-    ) {
-      lateTime = this.calculateTimeToMinutes(
-        this.companyConfig.morningStartTime,
-        format(request.checkIn, 'HH:mm:ss'),
-      );
-      const workHoursMorning = +this.calculateTimeToHours(
-        format(request.checkIn, 'HH:mm:ss'),
-        this.companyConfig.morningEndTime,
-      );
-      const workHoursAfternoon = +this.calculateTimeToHours(
-        this.companyConfig.afternoonStartTime,
-        format(request.checkOut, 'HH:mm:ss'),
-      );
-
-      workHours = workHoursMorning + workHoursAfternoon;
-    }
-
-    if (
-      !this.compareSmallerTime(
-        format(request.checkIn, 'HH:mm:ss'),
-        this.companyConfig.morningEndTime,
-      )
-    ) {
-      lateTime = this.calculateTimeToMinutes(
-        this.companyConfig.afternoonStartTime,
-        format(request.checkIn, 'HH:mm:ss'),
-      );
-      const workHoursAfternoon = +this.calculateTimeToHours(
-        format(request.checkIn, 'HH:mm:ss'),
-        format(request.checkOut, 'HH:mm:ss'),
-      );
-      workHours = workHoursAfternoon;
-    }
-
-    await this.attendanceRepository.update(request.attendanceId, {
-      checkIn: request.checkIn,
-      checkOut: request.checkOut,
-      lateTime: lateTime,
-      workHours: workHours,
-      status: AttendanceStatus.ACTIVE,
-    });
-
-    return {
-      message: 'success',
-    };
   }
 
   async rejectRequestAttendanceOfUser(requestId: number) {

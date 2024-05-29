@@ -4,6 +4,7 @@ import addFormats from 'ajv-formats';
 import { first } from 'lodash';
 import { UnprocessableEntity } from '../exception';
 import { AjvSchema } from '@app/core/types/AJVSchema';
+import { Transform, TransformOptions } from 'class-transformer';
 
 // Ex: 2021-06-19T00:00:00.000Z
 const ISOStringRegex = new RegExp(
@@ -65,4 +66,51 @@ export function validate(schemaKeyRef: AjvSchema | any, data: any) {
     }
   }
   return true;
+}
+
+export function Trim(transformOptions?: TransformOptions): PropertyDecorator {
+  return Transform(({ value }) => {
+    if ('string' !== typeof value) {
+      return value;
+    }
+    return value.trim();
+  }, transformOptions);
+}
+
+export function LowerCase(
+  transformOptions?: TransformOptions,
+): PropertyDecorator {
+  return Transform(({ value }) => {
+    if ('string' !== typeof value) {
+      return value;
+    }
+    return value.toLowerCase();
+  }, transformOptions);
+}
+
+// eslint-disable-next-line
+export function ParseArray(
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  transformFn: Function = Number,
+  transformOptions?: TransformOptions,
+): PropertyDecorator {
+  return Transform(({ value = '' }) => {
+    if ('string' !== typeof value) {
+      return value;
+    }
+    return value.split(',').map((e) => transformFn(e));
+  }, transformOptions);
+}
+
+export function ParseBoolean(
+  transformOptions?: TransformOptions,
+): PropertyDecorator {
+  return Transform(({ value }) => {
+    if (value === '1') {
+      return true;
+    } else if (value === '0') {
+      return false;
+    }
+    return value;
+  }, transformOptions);
 }

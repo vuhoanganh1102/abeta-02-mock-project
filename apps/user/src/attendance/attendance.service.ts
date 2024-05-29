@@ -8,9 +8,9 @@ import { Attendance } from '@app/database-type-orm/entities/Attendance.entity';
 import { CompanyConfig } from '@app/database-type-orm/entities/CompanyConfig.entity';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { format } from 'date-fns';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AttendanceRequestDto } from './dtos/attendanceRequest.dto';
 import { Request } from '@app/database-type-orm/entities/Request.entity';
 import { RequestAdmin } from '@app/database-type-orm/entities/RequestAdmin.entity';
@@ -30,6 +30,8 @@ export class AttendanceService {
     @InjectRepository(CompanyConfig)
     private companyConfigRepository: Repository<CompanyConfig>,
     private firebaseUploadService: FirebaseUploadService,
+    @InjectDataSource()
+    private dataSource: DataSource,
   ) {}
 
   private companyConfig = {
@@ -47,6 +49,7 @@ export class AttendanceService {
     ) {
       throw new Exception(ErrorCode.Exceeded_Time_Attendance);
     }
+
     const date = format(new Date(), 'yyyy-MM-dd');
     const attendance = await this.attendanceRepository.findOne({
       where: { userId: userId, date: date },
@@ -61,12 +64,12 @@ export class AttendanceService {
           this.companyConfig.morningEndTime,
         )
       ) {
-        lateTime = this.calculateTimeToMinutes(
+        lateTime = +this.calculateTimeToMinutes(
           this.companyConfig.morningStartTime,
           format(checkIn, 'HH:mm:ss'),
         );
       } else {
-        lateTime = this.calculateTimeToMinutes(
+        lateTime = +this.calculateTimeToMinutes(
           this.companyConfig.afternoonStartTime,
           format(checkIn, 'HH:mm:ss'),
         );
@@ -88,7 +91,7 @@ export class AttendanceService {
       };
     }
 
-    if (attendance && attendance.status === AttendanceStatus.PENDING) {
+    if (attendance) {
       const checkOut = new Date();
       let workHours;
 
@@ -157,8 +160,6 @@ export class AttendanceService {
         workHours: workHours,
       };
     }
-
-    throw new Exception(ErrorCode.CheckOut_Already_Exists);
   }
 
   async getAttendance(userId: number, date: string) {
@@ -178,118 +179,125 @@ export class AttendanceService {
       throw new Exception(ErrorCode.Exceeded_Time_Request);
     }
 
-    const attendance = await this.attendanceRepository.findOne({
-      where: {
-        userId: userId,
-        date: attendanceRequestDto.date,
-      },
-    });
+    return this.dataSource.transaction(async (manager) => {
+      const attendanceRepo = manager.getRepository(Attendance);
+      const requestRepo = manager.getRepository(Request);
+      const requestAdminRepo = manager.getRepository(RequestAdmin);
 
-    let imageUrl;
-    if (file) {
-      imageUrl = await this.firebaseUploadService.uploadSingleImage(file);
-    }
-
-    let attendanceId;
-
-    if (!attendance) {
-      let lateTime, workHours;
-      if (
-        this.compareSmallerTime(
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-          this.companyConfig.morningEndTime,
-        ) &&
-        this.compareSmallerTime(
-          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
-          this.companyConfig.afternoonStartTime,
-        )
-      ) {
-        lateTime = this.calculateTimeToMinutes(
-          this.companyConfig.morningStartTime,
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-        );
-        const workHoursMorning = +this.calculateTimeToHours(
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
-        );
-        workHours = workHoursMorning;
-      }
-
-      if (
-        this.compareSmallerTime(
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-          this.companyConfig.morningEndTime,
-        ) &&
-        !this.compareSmallerTime(
-          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
-          this.companyConfig.afternoonStartTime,
-        )
-      ) {
-        lateTime = this.calculateTimeToMinutes(
-          this.companyConfig.morningStartTime,
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-        );
-        const workHoursMorning = +this.calculateTimeToHours(
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-          this.companyConfig.morningEndTime,
-        );
-        const workHoursAfternoon = +this.calculateTimeToHours(
-          this.companyConfig.afternoonStartTime,
-          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
-        );
-
-        workHours = workHoursMorning + workHoursAfternoon;
-      }
-
-      if (
-        !this.compareSmallerTime(
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-          this.companyConfig.morningEndTime,
-        )
-      ) {
-        lateTime = this.calculateTimeToMinutes(
-          this.companyConfig.afternoonStartTime,
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-        );
-        const workHoursAfternoon = +this.calculateTimeToHours(
-          format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
-          format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
-        );
-        workHours = workHoursAfternoon;
-      }
-
-      const result = await this.attendanceRepository.save({
-        userId: userId,
-        date: attendanceRequestDto.date,
-        checkIn: attendanceRequestDto.checkIn,
-        checkOut: attendanceRequestDto.checkOut,
-        lateTime: lateTime,
-        workHours: workHours,
-        status: AttendanceStatus.PENDING,
+      const attendance = await attendanceRepo.findOne({
+        where: {
+          userId: userId,
+          date: attendanceRequestDto.date,
+        },
       });
 
-      attendanceId = result.id;
-    }
+      let imageUrl;
+      if (file) {
+        imageUrl = await this.firebaseUploadService.uploadSingleImage(file);
+      }
 
-    if (attendance && attendance.status === AttendanceStatus.PENDING) {
-      attendanceId = attendance.id;
-    }
+      let attendanceId;
 
-    const request = await this.requestRepository.save({
-      title: attendanceRequestDto.title,
-      content: attendanceRequestDto.content,
-      attendanceId: attendanceId,
-      imageUrl: imageUrl,
-      status: RequestStatus.UNRESOLVED,
-      checkIn: attendanceRequestDto.checkIn,
-      checkOut: attendanceRequestDto.checkOut,
+      if (!attendance) {
+        let lateTime, workHours;
+        if (
+          this.compareSmallerTime(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            this.companyConfig.morningEndTime,
+          ) &&
+          this.compareSmallerTime(
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+            this.companyConfig.afternoonStartTime,
+          )
+        ) {
+          lateTime = this.calculateTimeToMinutes(
+            this.companyConfig.morningStartTime,
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+          );
+          const workHoursMorning = +this.calculateTimeToHours(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+          );
+          workHours = workHoursMorning;
+        }
+
+        if (
+          this.compareSmallerTime(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            this.companyConfig.morningEndTime,
+          ) &&
+          !this.compareSmallerTime(
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+            this.companyConfig.afternoonStartTime,
+          )
+        ) {
+          lateTime = this.calculateTimeToMinutes(
+            this.companyConfig.morningStartTime,
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+          );
+          const workHoursMorning = +this.calculateTimeToHours(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            this.companyConfig.morningEndTime,
+          );
+          const workHoursAfternoon = +this.calculateTimeToHours(
+            this.companyConfig.afternoonStartTime,
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+          );
+
+          workHours = workHoursMorning + workHoursAfternoon;
+        }
+
+        if (
+          !this.compareSmallerTime(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            this.companyConfig.morningEndTime,
+          )
+        ) {
+          lateTime = this.calculateTimeToMinutes(
+            this.companyConfig.afternoonStartTime,
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+          );
+          const workHoursAfternoon = +this.calculateTimeToHours(
+            format(attendanceRequestDto.checkIn, 'HH:mm:ss'),
+            format(attendanceRequestDto.checkOut, 'HH:mm:ss'),
+          );
+          workHours = workHoursAfternoon;
+        }
+
+        const result = await requestRepo.save({
+          userId: userId,
+          date: attendanceRequestDto.date,
+          checkIn: attendanceRequestDto.checkIn,
+          checkOut: attendanceRequestDto.checkOut,
+          lateTime: lateTime,
+          workHours: workHours,
+          status: AttendanceStatus.PENDING,
+        });
+
+        attendanceId = result.id;
+      }
+
+      if (attendance && attendance.status === AttendanceStatus.PENDING) {
+        attendanceId = attendance.id;
+      }
+
+      const request = await requestRepo.save({
+        title: attendanceRequestDto.title,
+        content: attendanceRequestDto.content,
+        attendanceId: attendanceId,
+        imageUrl: imageUrl,
+        status: RequestStatus.UNRESOLVED,
+        checkIn: attendanceRequestDto.checkIn,
+        checkOut: attendanceRequestDto.checkOut,
+      });
+
+      await requestAdminRepo.save({
+        requestId: request.id,
+        adminId: 1,
+      });
+
+      return { message: 'success' };
     });
-
-    await this.requestAdminRepository.save({
-      requestId: request.id,
-      adminId: 1,
-    });
-    return { message: 'success' };
   }
 
   async getListRequestAttendance(userId: number, month: string, year: string) {

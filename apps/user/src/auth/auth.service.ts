@@ -226,8 +226,13 @@ export class AuthService {
     //get current otp of user in data
     const otpRecord = await this.otpRepository
       .createQueryBuilder('otp')
+<<<<<<< HEAD
+      .where('otp.email = :email', { userId: user.email })
+      .andWhere('otp.userType = :userType', { userType: 0 })
+=======
       .where('otp.email = :email', { email: user.email })
       .andWhere('otp.userType = :userType', { userType: UserType.USER })
+>>>>>>> 6e66c4b5ed6aa20c4d21d3957edc369cc3d9baf0
       .andWhere('otp.isCurrent = :isCurrent', {
         isCurrent: IsCurrent.IS_CURRENT,
       })
