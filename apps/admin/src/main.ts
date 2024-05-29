@@ -11,13 +11,14 @@ async function bootstrap() {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
   app.set('trust proxy', 1);
+  app.setGlobalPrefix('api/admin')
   app.useLogger(new CustomLogger());
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Mock project')
-    .setDescription('description of the project')
+    .setTitle('Admin CMS - HR management')
+    .setDescription('APIs for Admin')
     .setVersion('1.0')
-    .addTag('Tags')
+    .addTag('Admin')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);

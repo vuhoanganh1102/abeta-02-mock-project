@@ -13,13 +13,14 @@ async function bootstrap() {
   });
 
   app.set('trust proxy', 1);
+  app.setGlobalPrefix('api/user');
   app.useLogger(new CustomLogger());
   const configService: ConfigService<IConfig> = app.get(ConfigService);
   const port = configService.get<number>('port', 3002);
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('User Project')
-    .setDescription('description of the user project')
+    .setTitle('User - HR Management')
+    .setDescription('APIs for User')
     .setVersion('1.0')
     .addTag('User')
     .addBearerAuth()

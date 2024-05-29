@@ -17,12 +17,4 @@ export class UpdateUserDto {
   @ApiProperty({ example: '0000000' })
   @IsOptional()
   phoneNumber: string;
-
-  @ApiProperty({ example: 'url' })
-  @IsOptional()
-  avatar: string;
-
-  @ApiProperty({ example: 0 })
-  @IsOptional()
-  isVerified: number;
 }

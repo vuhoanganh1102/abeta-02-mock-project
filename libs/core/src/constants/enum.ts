@@ -38,6 +38,7 @@ export enum ErrorCode {
   Token_Expired = 'Token_Expired',
   Verification_Code_Invalid = 'Verification_Code_Invalid',
   User_Not_Found = 'User_Not_Found',
+  User_Deleted = 'User_Deleted',
   Admin_Not_Found = 'Admin_Not_Found',
   Task_Duplicate = 'Task_Duplicate',
   Task_Not_Found = 'Task_Not_Found',
@@ -66,9 +67,8 @@ export enum Environment {
 }
 
 export enum UserType {
-  CLIENT = 'CLIENT',
-  ADMIN = 'ADMIN',
-  SUPER_ADMIN = 'SUPER_ADMIN',
+  USER = 0,
+  ADMIN = 1,
 }
 
 export enum TokenType {

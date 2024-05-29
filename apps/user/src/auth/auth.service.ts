@@ -7,6 +7,7 @@ import {
   ErrorCode,
   IsCurrent,
   OTPCategory,
+  UserType,
   VerifiedStatus,
 } from '@app/core/constants/enum';
 import * as bcrypt from 'bcrypt';
@@ -18,6 +19,7 @@ import { ResetPasswordDto } from './dtos/resetPassword.dto';
 import { addMinutes, format, subMinutes } from 'date-fns';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { Injectable } from '@nestjs/common';
+import * as process from 'process';
 
 @Injectable()
 export class AuthService {
@@ -40,9 +42,9 @@ export class AuthService {
     if (!user) {
       throw new Exception(ErrorCode.Email_Not_Valid);
     }
-    // if (!bcrypt.compareSync(loginDto.password, user.password)) {
-    //   throw new Exception(ErrorCode.Password_Not_Valid);
-    // }
+    if (!bcrypt.compareSync(loginDto.password, user.password)) {
+      throw new Exception(ErrorCode.Password_Not_Valid);
+    }
     return this.generateTokensAndSave(user);
   }
 
@@ -62,7 +64,7 @@ export class AuthService {
     };
   }
 
-  async verifyAccount(resetToken: string) {
+  async verifyAccount(token: string) {
     const otp = await this.otpRepository
       .createQueryBuilder('otp')
       .where('otp.otpCategory = :otpCategory', {
@@ -71,7 +73,7 @@ export class AuthService {
       .andWhere('otp.isCurrent = :isCurrent', {
         isCurrent: IsCurrent.IS_CURRENT,
       })
-      .andWhere('otp.otp = :resetToken', { resetToken: resetToken })
+      .andWhere('otp.otp = :token', { token: token })
       .andWhere('otp.expiredAt > :now', { now: new Date() })
       .getOne();
 
@@ -211,8 +213,8 @@ export class AuthService {
     const maxOtpInFiveMins = 5;
     const otpCountLastFiveMins = await this.otpRepository
       .createQueryBuilder('otp')
-      .where('otp.email = :email', { userId: user.email })
-      .andWhere('otp.userType = :userType', { userType: 0 })
+      .where('otp.email = :email', { email: user.email })
+      .andWhere('otp.userType = :userType', { userType: UserType.USER })
       .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
         fiveMinutesAgoFormat,
       })
@@ -224,8 +226,13 @@ export class AuthService {
     //get current otp of user in data
     const otpRecord = await this.otpRepository
       .createQueryBuilder('otp')
+<<<<<<< HEAD
       .where('otp.email = :email', { userId: user.email })
       .andWhere('otp.userType = :userType', { userType: 0 })
+=======
+      .where('otp.email = :email', { email: user.email })
+      .andWhere('otp.userType = :userType', { userType: UserType.USER })
+>>>>>>> 6e66c4b5ed6aa20c4d21d3957edc369cc3d9baf0
       .andWhere('otp.isCurrent = :isCurrent', {
         isCurrent: IsCurrent.IS_CURRENT,
       })
@@ -240,24 +247,28 @@ export class AuthService {
     }
 
     //create new otp
-    const forgetOtp = this.generateRandomResetToken();
-    const resetLink = process.env.RESET_LINK + `${forgetOtp}`;
+    const otp = this.generateRandomResetToken();
+    const link =
+      otpType === OTPCategory.REGISTER
+        ? process.env.RESET_LINK + `${otp}`
+        : process.env.VERIFY_LINK + `${otp}`;
     const expiredAt = addMinutes(
       new Date(),
       parseInt(process.env.OTP_EXPIRY_TIME),
     );
 
     const expiredAtString = format(expiredAt, 'yyyy-MM-dd HH:mm:ss');
-    const newOtp = this.otpRepository.create({
-      otp: forgetOtp,
+    const newOtpRecord = this.otpRepository.create({
+      otp: otp,
       userId: user.id,
       email: user.email,
       isCurrent: IsCurrent.IS_CURRENT,
       otpCategory: otpType,
       expiredAt: expiredAtString,
+      userType: UserType.USER,
     });
 
-    await this.otpRepository.save(newOtp);
+    await this.otpRepository.save(newOtpRecord);
 
     // send
     await this.sendGridService.sendMail(
@@ -266,7 +277,7 @@ export class AuthService {
         ? 'Verify Your Account'
         : 'Reset Your Password',
       otpType === OTPCategory.REGISTER ? './verify' : './reset-password',
-      { resetLink },
+      { link },
     );
     return {
       message: 'Check your email',

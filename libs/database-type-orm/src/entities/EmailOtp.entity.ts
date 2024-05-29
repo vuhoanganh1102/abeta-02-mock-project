@@ -29,9 +29,12 @@ export class EmailOtp {
   @Column({
     name: 'otp_category',
     type: 'tinyint',
-    comment: '1: verify otp, 2: reset password otp',
+    comment: '0: verify otp, 1: reset password otp',
   })
   otpCategory: number;
+
+  @Column({ name: 'user_type', type: 'tinyint', comment: '0: user, 1: admin' })
+  userType: number;
 
   @Column({
     name: 'is_current',
@@ -39,9 +42,6 @@ export class EmailOtp {
     default: IsCurrent.IS_CURRENT,
   })
   isCurrent: number;
-
-  @Column({ name: 'user_type', type: 'tinyint', comment: '0: user, 1: admin' })
-  userType: number;
 
   @Column({ name: 'expired_at', type: 'datetime' })
   expiredAt: string;
