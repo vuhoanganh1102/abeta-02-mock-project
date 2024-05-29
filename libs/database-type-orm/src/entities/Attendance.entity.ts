@@ -37,6 +37,9 @@ export class Attendance {
   @Column({ name: 'work_hours', type: 'float', nullable: true })
   workHours: number;
 
+  @Column({ name: 'work_minutes', type: 'float', nullable: true })
+  workMinutes: number;
+
   @Column({ name: 'late_time', type: 'float', nullable: true })
   lateTime: number;
 
