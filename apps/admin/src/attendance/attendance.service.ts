@@ -131,13 +131,11 @@ export class AttendanceService {
         .take(params.pageSize)
         .getManyAndCount();
 
-    const pagingResult = returnPaging(
+    return returnPaging(
       attendanceRequests,
       totalAttendanceRequests,
       params,
     );
-
-    return pagingResult;
   }
 
   async acceptRequestAttendanceOfUser(requestId: number) {
@@ -233,8 +231,8 @@ export class AttendanceService {
     }
 
     await this.attendanceRepository.update(request.attendanceId, {
-      checkIn: request.checkIn,
-      checkOut: request.checkOut,
+      checkIn: request.checkIn.toISOString,
+      checkOut: request.checkOut.toISOString,
       lateTime: lateTime,
       workHours: workHours,
       status: AttendanceStatus.ACTIVE,

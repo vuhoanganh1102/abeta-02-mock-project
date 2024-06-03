@@ -1,19 +1,18 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-// import { CreateManageUserDto } from './dto/create-manage-user.dto';
-// import { UpdateManageUserDto } from './dto/update-manage-user.dto';
+import { Injectable } from '@nestjs/common';
 import { User } from '@app/database-type-orm/entities/User.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Exception } from '@app/core/exception';
 import { ErrorCode, OTPCategory, UserType } from '@app/core/constants/enum';
-import { UpdateUserDto } from './dto/UpdateUser.entity';
-import { CreateUserDto } from './dto/CreateUser.entity';
 import * as bcrypt from 'bcrypt';
 import { SendgridService } from '@app/sendgrid';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { FirebaseUploadService } from '@app/firebase-upload';
-// import { Admin } from '@app/database-type-orm/entities/Admin.entity';
-import * as process from 'process';
+import { assignPaging, returnPaging } from '@app/helpers';
+import { PagingDto } from './dtos/paging.dto';
+import { UserIdDto } from './dtos/userId.dto';
+import { UpdateUserDto } from './dtos/updateUser.dto';
+import { CreateUserDto } from './dtos/createUser.dto';
 
 @Injectable()
 export class ManageUserService {
@@ -22,83 +21,64 @@ export class ManageUserService {
     private readonly userRepository: Repository<User>,
 
     @InjectRepository(EmailOtp)
-    private readonly emailRespository: Repository<EmailOtp>,
+    private readonly emailRepository: Repository<EmailOtp>,
     private readonly firebaseService: FirebaseUploadService,
     private readonly sendGridService: SendgridService,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async getUsers() {
-    try {
-      const userArray = this.userRepository.find();
-      if ((await userArray).length > 0) return userArray;
-      throw new Exception(ErrorCode.Not_Found_Data);
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  async getUsers(pagingDto: PagingDto) {
+    const params = assignPaging(pagingDto);
+    const users = await this.userRepository.find({
+      skip: params.pageIndex,
+      take: params.pageSize,
+    });
+    const totalUsers = await this.userRepository.count();
+    return returnPaging(users, totalUsers, params);
   }
 
-  async updateUser(id: number, updateUser: UpdateUserDto) {
-    const updatedAt = new Date().toISOString();
+  async updateUser(userIdDto: UserIdDto, updateUser: UpdateUserDto) {
     return await this.userRepository.update(
-      { id },
-      { ...updateUser, updatedAt },
+      { id: userIdDto.id },
+      { ...updateUser },
     );
   }
 
   async createUser(createUser: CreateUserDto) {
-    const checkExistEmail = await this.userRepository.findOne({
-      where: { email: createUser.email },
-    });
-    if (!checkExistEmail) {
+    //start transaction
+    return this.dataSource.transaction(async (transaction) => {
+      const userRepository = transaction.getRepository(User);
+      //check email existence
+      const user = await userRepository.findOne({
+        where: { email: createUser.email },
+      });
+      if (user) throw new Exception(ErrorCode.Email_Already_Exists);
+
+      //hash password
       const password = await bcrypt.hashSync(
         createUser.password,
         bcrypt.genSaltSync(),
       );
-      const creater = this.userRepository.create({
+
+      //create new user
+      const newUser = userRepository.create({
         email: createUser.email,
         password: password,
       });
-      const saveUser = await this.userRepository.save(creater);
-      if (!saveUser)
-        return new Exception(ErrorCode.Failed_Creater).getResponse();
-      else {
-        const emailOtp = await this.sendGridService.generateOtp(50);
-        const link = process.env.VERIFY_LINK + `${emailOtp}`;
-        const dateNow = new Date();
-        const emailExpire = new Date(
-          dateNow.getTime() + 2 * 60 * 1000,
-        ).toISOString();
-        const createEmail = await this.emailRespository.create({
-          userId: (await saveUser).id,
-          email: (await saveUser).email,
-          otp: emailOtp,
-          expiredAt: emailExpire,
-          otpCategory: OTPCategory.REGISTER,
-          userType: UserType.USER,
-        });
-        const saveCreater = await this.emailRespository.save(createEmail);
-        if (!saveCreater) return new Error('Please send otp email again.');
-        else {
-          const sendMail = this.sendGridService.sendMail(
-            saveUser.email,
-            'Verify email otp from manage user.',
-            'verify',
-            { link },
-          );
-          return {
-            user: saveUser,
-            email: sendMail,
-          };
-        }
-      }
-    }
-    return new Exception(ErrorCode.Email_Already_Exists).getResponse();
+      await userRepository.save(newUser);
+      //send verify link with otp
+      await this.sendGridService.createOtpAndSend(
+        newUser,
+        UserType.USER,
+        OTPCategory.REGISTER,
+      );
+      return {
+        message: 'Check your email to verify account',
+      };
+    });
   }
 
-  async getDetailUser(id: number) {
+  async getDetailUser(userIdDto: UserIdDto) {
     const user = await this.userRepository
       .createQueryBuilder('user')
       .select([
@@ -112,7 +92,7 @@ export class ManageUserService {
         'user.isVerified',
         'user.deletedAt',
       ])
-      .where('user.id = :id', { id })
+      .where('user.id = :id', { id: userIdDto.id })
       .withDeleted()
       .getOne();
 
@@ -122,33 +102,26 @@ export class ManageUserService {
     if (!user) {
       throw new Exception(ErrorCode.User_Not_Found);
     }
-
     return user;
   }
 
-  async deleteUser(id: number) {
-    try {
-      const deletedAt = new Date().toISOString();
-      const updatedAt = new Date().toISOString();
-      const update = await this.userRepository.update(
-        { id },
-        { deletedAt, updatedAt },
-      );
-
-      return update;
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  deleteUser(userIdDto: UserIdDto) {
+    return this.userRepository.update(
+      { id: userIdDto.id },
+      {
+        deletedAt: new Date(),
+      },
+    );
   }
 
-  async uploadAvatar(file, id: number) {
+  async uploadAvatar(file, userIdDto: UserIdDto) {
     const imageUrl = await this.firebaseService.uploadSingleImage(file);
-    await this.userRepository.update({ id: id }, { avatar: imageUrl });
+    await this.userRepository.update(
+      { id: userIdDto.id },
+      { avatar: imageUrl },
+    );
     const user = await this.userRepository.findOne({
-      where: { id: id },
+      where: { id: userIdDto.id },
       select: [
         'id',
         'avatar',

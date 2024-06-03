@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { Public } from '@app/jwt-authentication/jwt-authentication.decorator';
 import {
   ApiBearerAuth,
@@ -7,32 +7,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dtos/login.dto';
 import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
-// import { AuthAdmin } from '@app/core/decorators/authAdmin.decorator';
+import { LoginDto } from './dtos/login.dto';
+import { RefreshTokenDto } from './dtos/refreshToken.dto';
+import { ForgotPasswordDto } from './dtos/forgotPasswordDto';
+import { ResetPasswordDto } from './dtos/resetPassword.dto';
+import { ChangePasswordDto } from './dtos/changePassword.dto';
+import { TokenDto } from './dtos/token.dto';
 
-class RefreshToken {
-  @ApiProperty({ example: '{"refresh_token":}' })
-  refresh_token: string;
-}
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-class sendLinkMail {
-  @ApiProperty({ example: 'anhvh1102@gmail.com' })
-  email: string;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-class resetPassword {
-  @ApiProperty({ example: '23456' })
-  password: string;
-}
-
-class formChangePassword {
-  @ApiProperty({ example: '23456' })
-  oldPassword: string;
-  @ApiProperty({ example: '23456' })
-  newPassword: string;
-}
 @ApiBearerAuth()
 @ApiTags('Auth')
 @Controller('auth')
@@ -45,18 +27,18 @@ export class AuthController {
     summary: 'login for admin',
     description: 'insert email and password to login',
   })
-  async signIn(@Body() loginDto: LoginDto) {
+  async loginAdmin(@Body() loginDto: LoginDto) {
     return this.authService.loginAdmin(loginDto);
   }
 
   @Public()
-  @Post('newToken')
+  @Post('refresh-token')
   @ApiOperation({
     summary: 'Get a new access token using refresh token',
     description: 'insert refresh token',
   })
-  async resetAccessToken(@Body() refreshToken: RefreshToken) {
-    return this.authService.getNewAccessToken(refreshToken.refresh_token);
+  async refreshToken(@Body() refreshDto: RefreshTokenDto) {
+    return this.authService.refreshToken(refreshDto.refreshToken);
   }
 
   @Public()
@@ -67,38 +49,42 @@ export class AuthController {
     description:
       'Insert an email. A link contains a token will be created and send to that email',
   })
-  async forgotPassword(@Body() sendLinkMail: sendLinkMail) {
-    return this.authService.forgotPassword(sendLinkMail.email);
+  async forgotPassword(@Body() forgotDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotDto.email);
   }
 
   @Public()
   @Post('reset-password/:otp')
   @ApiOperation({
     summary: 'Reset password with the link received from email',
-    description:
-      'Take the link received from email contains a token to reset password',
+    description: 'Insert new password',
   })
   async resetPassword(
-    @Body() resetPassword: resetPassword,
-    @Param('otp') otp: string,
+    @Body() resetDto: ResetPasswordDto,
+    @Query() tokenDto: TokenDto,
   ) {
-    return this.authService.resetPassword(resetPassword.password, otp);
+    return this.authService.resetPassword(resetDto.password, tokenDto.token);
   }
 
   @Public()
-  @Get('reset-password-form/:otp')
-  getResetPasswordOtp(@Param('otp') otp: string) {
+  @Get('reset-password-form')
+  @ApiOperation({
+    summary: 'A GET API for transferring token to reset password interface',
+    description:
+      'Take the link received from email contains a token to reset password',
+  })
+  getResetPasswordToken(@Query() tokenDto: TokenDto) {
     return {
-      otp: otp,
+      token: tokenDto.token,
     };
   }
 
   @Post('change-password')
-  changePassword(@AuthAdmin() admin, @Body() body: formChangePassword) {
-    return this.authService.changePassword(
-      admin.id,
-      body.newPassword,
-      body.oldPassword,
-    );
+  @ApiOperation({
+    summary: 'Admin logged in changes the password',
+    description: 'Insert old password to verify and new password to change',
+  })
+  changePassword(@AuthAdmin() admin, @Body() changeDto: ChangePasswordDto) {
+    return this.authService.changePassword(admin.id, changeDto);
   }
 }

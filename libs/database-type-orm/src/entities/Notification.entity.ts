@@ -44,7 +44,7 @@ export class Notification {
   )
   userNotifications: UserNotification[];
 
-  @Column({ name: 'schedule_time', type: 'datetime' })
+  @Column({ name: 'schedule_time', type: 'varchar' })
   scheduleTime: string;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })

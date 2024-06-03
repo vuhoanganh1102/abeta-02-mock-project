@@ -27,7 +27,6 @@ export class NotificationService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Admin)
     private readonly adminRepository: Repository<Admin>,
-    private readonly onesignalService: OnesignalService,
   ) {}
 
   async createNewNotification(
@@ -59,7 +58,7 @@ export class NotificationService {
       title: createDto.title,
       content: createDto.content,
       senderId: adminId,
-      scheduleTime: scheduleTime.toISOString(),
+      scheduleTime: new Date().toISOString(),
     });
     //create user notification
     const userNotification = await this.userNotificationRepository.save({
@@ -162,34 +161,5 @@ export class NotificationService {
     const dateTimeString = `${date}T${time}`;
     const dateTime = parseISO(dateTimeString);
     return format(dateTime, 'yyyy-MM-dd HH:mm:ss.SSSxxx');
-  }
-
-  @Cron('*/5 * * * *')
-  async getListToSend() {
-    const currentDate = new Date();
-    //find all pending
-    const pendingNotifications = await this.notificationRepository
-      .createQueryBuilder('notification')
-      .where('notification.status = :status', {
-        status: NotificationStatus.PENDING,
-      })
-      .andWhere('notification.scheduleTime < :currentDate', { currentDate })
-      .getMany();
-    //push all if schedule time passed
-    for (const notification of pendingNotifications) {
-      const receiver = await this.userNotificationRepository.findOneBy({
-        notificationId: notification.id,
-      });
-      if (receiver) {
-        await this.onesignalService.pushNotification(
-          [receiver.receiverId],
-          notification.title,
-          notification.content,
-        );
-        await this.notificationRepository.update(notification.id, {
-          status: NotificationStatus.SENT,
-        });
-      }
-    }
   }
 }

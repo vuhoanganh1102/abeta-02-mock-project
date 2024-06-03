@@ -8,13 +8,14 @@ import {
 } from '@app/core/constants/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '@app/database-type-orm/entities/Admin.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { JwtAuthenticationService } from '@app/jwt-authentication';
 import * as bcrypt from 'bcrypt';
 import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { SendgridService } from '@app/sendgrid';
+import * as process from 'process';
 import { LoginDto } from './dtos/login.dto';
-import { format, subMinutes } from 'date-fns';
+import { ChangePasswordDto } from './dtos/changePassword.dto';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
@@ -26,250 +27,132 @@ export class AuthService {
     private readonly jwtService: JwtAuthenticationService,
     @InjectRepository(EmailOtp)
     private readonly emailRepository: Repository<EmailOtp>,
-
     private readonly sendGridService: SendgridService,
+    private readonly dataSource: DataSource,
   ) {}
   async loginAdmin(loginDto: LoginDto) {
-    try {
-      const member = await this.adminRepository.findOne({
-        where: { email: loginDto.email },
-        select: ['id', 'email', 'password', 'resetToken', 'refreshToken'],
-      });
-      // kiem tra mat khau
-      const checkPassword = await bcrypt.compare(
-        loginDto.password,
-        member.password,
-      );
-      console.log(checkPassword);
-      const payload = {
-        id: member.id,
-        email: member.email,
-        role: process.env.ADMIN_SECRET_KEY,
-        resetToken: member.resetToken,
-      };
-      if (checkPassword) {
-        // generate access token moi
-        const access_token = await this.jwtService.generateAccessToken(payload);
-
-        //kiem tra xem ref token trong db co khong va co con han k
-        if (member.refreshToken !== '') {
-          const expireRefToken = await this.jwtService.verifyRefreshToken(
-            member.refreshToken,
-          );
-
-          if (!expireRefToken) {
-            const refresh_token =
-              await this.jwtService.generateRefreshToken(payload);
-
-            const creater = await this.adminRepository.update(
-              { id: member.id },
-              { refreshToken: refresh_token },
-            );
-
-            if (
-              checkPassword === true &&
-              member.email === loginDto.email &&
-              creater
-            ) {
-              // res.setHeader('Authorization', `Bearer ${access_token}`);
-              return {
-                access_token,
-                refresh_token,
-              };
-            }
-          } else {
-            return {
-              access_token,
-              refreshToken: member.refreshToken,
-            };
-          }
-        }
-      }
-      return new HttpException(
-        'Username or password wrong.',
-        HttpStatus.NON_AUTHORITATIVE_INFORMATION,
-      );
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async getNewAccessToken(refreshToken: string) {
-    try {
-      const checkRefToken =
-        await this.jwtService.verifyRefreshToken(refreshToken);
-
-      if (checkRefToken === false) {
-        throw new Exception(ErrorCode.Token_Expired);
-      } else {
-        const getRefTokenInDb = await this.adminRepository.findOne({
-          where: { id: checkRefToken.id },
-        });
-
-        if (!getRefTokenInDb) {
-          throw new Exception(ErrorCode.Token_Not_Exist);
-        } else {
-          if (
-            getRefTokenInDb.refreshToken === refreshToken &&
-            getRefTokenInDb.resetToken === checkRefToken.resetToken
-          ) {
-            const access_token = await this.jwtService.generateAccessToken({
-              id: getRefTokenInDb.id,
-              email: getRefTokenInDb.email,
-              resetToken: getRefTokenInDb.resetToken,
-              role: process.env.ADMIN_SECRET_KEY,
-            });
-            return {
-              access_token,
-            };
-          }
-          throw new Exception(ErrorCode.Auth_Failed);
-        }
-      }
-    } catch (err) {
-      throw new HttpException(
-        'Internal Server',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async forgotPassword(receiver: string) {
-    const checkExistEmail = await this.adminRepository.findOne({
-      where: { email: receiver },
+    //check user existence
+    const admin = await this.adminRepository.findOne({
+      where: { email: loginDto.email },
+      select: ['id', 'password', 'email', 'resetToken'],
     });
-    if (checkExistEmail) {
-      //check otp frequency
-      const fiveMinutesAgo = subMinutes(new Date(), 5);
-      const fiveMinutesAgoFormat = format(
-        fiveMinutesAgo,
-        'yyyy-MM-dd HH:mm:ss.SSSSSS',
-      );
-      const maxOtpInFiveMins = 5;
-      const otpCountLastFiveMins = await this.emailRepository
-        .createQueryBuilder('otp')
-        .where('otp.email = :email', { email: receiver })
-        .andWhere('otp.userType = :userType', { userType: UserType.USER })
-        .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
-          fiveMinutesAgoFormat,
-        })
-        .getCount();
+    if (!admin) throw new Exception(ErrorCode.Admin_Not_Found);
+    //check password
+    if (!bcrypt.compareSync(loginDto.password, admin.password))
+      throw new Exception(ErrorCode.Password_Not_Valid);
+    //generate tokens
+    return await this.generateTokensAndSave(admin);
+  }
 
-      if (otpCountLastFiveMins >= maxOtpInFiveMins) {
-        throw new Exception(ErrorCode.Too_Many_Requests);
-      }
-      const emailOtp = await this.sendGridService.generateOtp(10);
-      const dateNow = new Date();
-      const emailExpire = new Date(dateNow.getTime() + 15 * 60 * 1000);
-      const emailExpireISO = new Date(
-        emailExpire.setHours(emailExpire.getHours() + 7),
-      ).toISOString();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const checkIsCurrent = await this.emailRepository.update(
-        {
-          email: checkExistEmail.email,
-          isCurrent: IsCurrent.IS_CURRENT,
-        },
-        { isCurrent: IsCurrent.IS_OLD },
-      );
-      const createEmail = await this.emailRepository.save({
-        userId: checkExistEmail.id,
-        email: checkExistEmail.email,
-        otp: emailOtp,
-        expiredAt: emailExpireISO,
-        otpCategory: OTPCategory.FORGET_PASSWORD,
-        userType: 1,
-      });
+  async generateTokensAndSave(admin: Admin) {
+    //generate access token
+    const accessToken = this.jwtService.generateAccessToken({
+      id: admin.id,
+      email: admin.email,
+      resetToken: admin.resetToken,
+      role: process.env.ADMIN_SECRET_KEY,
+    });
+    //generate refresh token
+    const refreshToken = this.jwtService.generateRefreshToken({
+      id: admin.id,
+      email: admin.email,
+      resetToken: admin.resetToken,
+      role: process.env.ADMIN_SECRET_KEY,
+    });
+    //save refresh token into database
+    await this.adminRepository.update(admin.id, { refreshToken: refreshToken });
+    //return tokens
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    };
+  }
 
-      const saveCreater = await this.emailRepository.save(createEmail);
-      // return createEmail;
-      if (!saveCreater) return new Error('Please send otp email again.');
-      else {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const sendMail = await this.sendGridService.sendMail(
-          receiver,
-          'Click to link to reset password.',
-          'reset-password',
-          {
-            link: `http://localhost:3001/api/admin/auth/reset-password-form/${emailOtp}`,
-          },
-        );
-        return {
-          message: 'Check your email',
-        };
-      }
-    } else return new Exception(ErrorCode.Email_Not_Valid).getResponse();
+  async refreshToken(refreshToken: string) {
+    //decode refresh token
+    const payload = await this.jwtService.verifyRefreshToken(refreshToken);
+    if (!payload) throw new Exception(ErrorCode.Token_Expired);
+    //compare reset token
+    const user = await this.adminRepository.findOne({
+      where: { resetToken: payload.resetToken },
+    });
+    if (!user) throw new Exception(ErrorCode.Reset_Token_Invalid);
+    //generate new access token
+    return {
+      accessToken: this.jwtService.generateAccessToken({
+        id: payload.id,
+        email: payload.email,
+        resetToken: payload.resetToken,
+        role: process.env.ADMIN_SECRET_KEY,
+      }),
+    };
+  }
+
+  async forgotPassword(email: string) {
+    //check email existence
+    const admin = await this.adminRepository.findOne({
+      where: { email: email },
+    });
+    if (!admin) throw new Exception(ErrorCode.Email_Not_Valid);
+    //send
+    await this.sendGridService.createOtpAndSend(
+      admin,
+      OTPCategory.FORGET_PASSWORD,
+      UserType.ADMIN,
+    );
+    return {
+      message: 'Check your email',
+    };
   }
 
   async resetPassword(password: string, otp: string) {
-    const recentOtp = await this.emailRepository.findOne({
-      where: {
-        otp: otp,
-        otpCategory: OTPCategory.FORGET_PASSWORD,
-        userType: UserType.ADMIN,
-        isCurrent: IsCurrent.IS_CURRENT,
-      },
-    });
-    if (!recentOtp)
-      return new HttpException(
-        'Have not otp, please send it.',
-        HttpStatus.BAD_REQUEST,
+    //start transaction
+    return this.dataSource.transaction(async (transaction) => {
+      const adminRepository = transaction.getRepository(Admin);
+      const otpRepository = transaction.getRepository(EmailOtp);
+      //check otp existence and expiration
+      const checkOtp = await adminRepository
+        .createQueryBuilder('otp')
+        .where('otp.otp = :otp', { otp: otp })
+        .andWhere('otp.otpCategory = :otpCategory', {
+          otpCategory: OTPCategory.FORGET_PASSWORD,
+        })
+        .andWhere('otp.isCurrent = :isCurrent', {
+          isCurrent: IsCurrent.IS_CURRENT,
+        })
+        .andWhere('otp.userType = :userType', { userType: UserType.ADMIN })
+        .andWhere('otp.expiredAt >= :now', { now: new Date() })
+        .getOne();
+      if (!checkOtp) throw new Exception(ErrorCode.OTP_Invalid);
+      //hash and update password
+      const newPassword = bcrypt.hashSync(password, bcrypt.genSaltSync());
+      await adminRepository.update(
+        { id: checkOtp.id },
+        { password: newPassword },
       );
-    else {
-      const dateNow = new Date();
-      const check = new Date(recentOtp.expiredAt);
-      if (recentOtp.otp === otp && check >= dateNow) {
-        const hashedPassword = await bcrypt.hash(
-          password,
-          parseInt(process.env.BCRYPT_HASH_ROUND),
-        );
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const changePassword = await this.adminRepository.update(
-          {
-            email: recentOtp.email,
-          },
-          { password: hashedPassword },
-        );
-        return new HttpException('Successfully Changed.', HttpStatus.OK);
-      }
-      return new HttpException('Dont change.', HttpStatus.BAD_REQUEST);
-    }
+      //update otp status
+      await otpRepository.update({ otp: otp }, { isCurrent: IsCurrent.IS_OLD });
+    });
   }
 
-  async changePassword(id: number, newPassword: string, oldPassword: string) {
+  async changePassword(id: number, changeDto: ChangePasswordDto) {
+    //find admin
     const admin = await this.adminRepository.findOne({
       where: { id },
       select: ['password'],
     });
-
-    if (!admin)
-      return new HttpException('Dont find admin.', HttpStatus.BAD_REQUEST);
-    else {
-      const compare = await bcrypt.compare(oldPassword, admin.password);
-
-      if (compare) {
-        const bPassword = await bcrypt.hash(
-          newPassword,
-          parseInt(process.env.BCRYPT_HASH_ROUND),
-        );
-        const changePassword = this.adminRepository.update(
-          { id },
-          { password: bPassword },
-        );
-        if (!changePassword)
-          return new HttpException(
-            'Password changing is failed.',
-            HttpStatus.BAD_REQUEST,
-          );
-        return new HttpException('Successfully', HttpStatus.OK);
-      }
-      return new HttpException(
-        'Old Password is wrong.',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    if (!admin) throw new Exception(ErrorCode.Admin_Not_Found);
+    //compare old password
+    const compare = await bcrypt.compare(changeDto.oldPassword, admin.password);
+    if (!compare) throw new Exception(ErrorCode.Password_Not_Valid);
+    //change new password
+    const newPassword = bcrypt.hash(
+      changeDto.newPassword,
+      process.env.BCRYPT_HASH_ROUND,
+    );
+    await this.adminRepository.update(id, { password: newPassword });
+    return {
+      message: 'Change password successfully',
+    };
   }
 }

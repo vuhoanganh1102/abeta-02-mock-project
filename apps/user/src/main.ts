@@ -1,5 +1,5 @@
 import { CustomLogger } from '@app/core/logging/logging.service';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -13,6 +13,7 @@ async function bootstrap() {
   app.set('trust proxy', 1);
   app.setGlobalPrefix('api/user');
   app.useLogger(new CustomLogger());
+  app.useGlobalPipes(new ValidationPipe());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('User - HR Management')

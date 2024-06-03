@@ -12,6 +12,8 @@
   },
   "moduleNameMapper": {
     "@app/onesignal/(.*)": "<rootDir>/../libs/onesignal/src/$1",
-    "@app/onesignal": "<rootDir>/../libs/onesignal/src"
+    "@app/onesignal": "<rootDir>/../libs/onesignal/src",
+    "@app/queue/(.*)": "<rootDir>/../libs/queue/src/$1",
+    "@app/queue": "<rootDir>/../libs/queue/src"
   }
 }

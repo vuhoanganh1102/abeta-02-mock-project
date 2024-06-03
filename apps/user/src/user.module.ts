@@ -13,6 +13,7 @@ import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
 import { EmployeeModule } from './employee/employee.module';
 import { NotificationModule } from './notification/notification.module';
+import {QueueModule} from "@app/queue";
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { NotificationModule } from './notification/notification.module';
     AttendanceModule,
     EmployeeModule,
     NotificationModule,
+      QueueModule
   ],
   controllers: [],
   providers: [

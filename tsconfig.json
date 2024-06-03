@@ -65,6 +65,12 @@
       ],
       "@app/onesignal/*": [
         "libs/onesignal/src/*"
+      ],
+      "@app/queue": [
+        "libs/queue/src"
+      ],
+      "@app/queue/*": [
+        "libs/queue/src/*"
       ]
     }
   }

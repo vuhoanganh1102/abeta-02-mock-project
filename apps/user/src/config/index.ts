@@ -29,11 +29,11 @@ const config = {
   //   authToken: process.env.TWILIO_AUTH_TOKEN,
   //   phoneNumber: process.env.TWILIO_PHONE_NUMBER,
   // },
-  // queue: {
-  //   host: process.env.QUEUE_HOST || 'localhost',
-  //   port: process.env.QUEUE_PORT || 6379,
-  //   prefix: process.env.QUEUE_PREFIX || '',
-  // },
+  queue: {
+    host: process.env.QUEUE_HOST || 'localhost',
+    port: process.env.QUEUE_PORT || 6379,
+    prefix: process.env.QUEUE_PREFIX || '',
+  },
 };
 
 const validateConfigSchema: AjvSchema = {
@@ -101,23 +101,23 @@ const validateConfigSchema: AjvSchema = {
     //     },
     //   },
     // },
-    // queue: {
-    //   type: 'object',
-    //   additionalProperties: false,
-    //   properties: {
-    //     host: {
-    //       type: 'string',
-    //       minLength: 1,
-    //     },
-    //     port: {
-    //       type: 'integer',
-    //       minimum: 1,
-    //     },
-    //     prefix: {
-    //       type: 'string',
-    //     },
-    //   },
-    // },
+    queue: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        host: {
+          type: 'string',
+          minLength: 1,
+        },
+        port: {
+          type: 'integer',
+          minimum: 1,
+        },
+        prefix: {
+          type: 'string',
+        },
+      },
+    },
     appName: {
       type: 'string',
     },
@@ -161,11 +161,11 @@ export interface IConfigSendGrid {
   apiKey: string;
 }
 
-// export interface IConfigQueue {
-//   host: string;
-//   port: number;
-//   prefix: string;
-// }
+export interface IConfigQueue {
+  host: string;
+  port: number;
+  prefix: string;
+}
 //
 // export interface IConfigTwilio {
 //   sid: string;

@@ -6,12 +6,10 @@ import { Admin } from '@app/database-type-orm/entities/Admin.entity';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { NotificationService } from './notification.service';
 import { NotificationController } from './notification.controller';
-import { OnesignalModule } from '@app/onesignal';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Notification, UserNotification, Admin, User]),
-    OnesignalModule,
   ],
   exports: [NotificationService],
   controllers: [NotificationController],

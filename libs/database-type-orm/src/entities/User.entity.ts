@@ -79,11 +79,11 @@ export class User {
   user_notifications: UserNotification[];
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
-  deletedAt: string;
+  deletedAt: Date;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt: string;
+  createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt: string;
+  updatedAt: Date;
 }

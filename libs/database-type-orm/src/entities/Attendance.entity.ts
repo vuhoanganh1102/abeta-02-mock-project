@@ -29,10 +29,10 @@ export class Attendance {
   date: string;
 
   @Column({ name: 'check_in', type: 'timestamp', nullable: true })
-  checkIn: Date;
+  checkIn: string;
 
   @Column({ name: 'check_out', type: 'timestamp', nullable: true })
-  checkOut: Date;
+  checkOut: string;
 
   @Column({ name: 'work_hours', type: 'float', nullable: true })
   workHours: number;

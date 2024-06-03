@@ -1,13 +1,22 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { MODULE_OPTIONS_TOKEN } from '@app/sendgrid/sendgrid.module-definition';
-import { SendGridModuleOptions } from '@app/sendgrid/sendgrid.interface';
+import {Inject, Injectable, Logger} from '@nestjs/common';
+import {MODULE_OPTIONS_TOKEN} from '@app/sendgrid/sendgrid.module-definition';
+import {SendGridModuleOptions} from '@app/sendgrid/sendgrid.interface';
 import * as sendGrid from '@sendgrid/mail';
 import * as path from 'path';
-import { readFile } from 'fs/promises';
+import {readFile} from 'fs/promises';
 import * as ejs from 'ejs';
-import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import {EmailOtp} from '@app/database-type-orm/entities/EmailOtp.entity';
+import {DataSource, Repository} from 'typeorm';
+import {InjectRepository} from '@nestjs/typeorm';
+import {addMinutes, format, subMinutes} from 'date-fns';
+import {ErrorCode, IsCurrent, OTPCategory, QueueName, UserType,} from '@app/core/constants/enum';
+import {Exception} from '@app/core/exception';
+import {LiteralObject} from '@nestjs/common/cache';
+import {SendgridDto} from "@app/sendgrid/dtos/sendgrid.dto";
+import {QueueService} from "@app/queue";
+
+require('dotenv').config();
+
 @Injectable()
 export class SendgridService {
   private readonly logger: Logger = new Logger(SendgridService.name);
@@ -16,18 +25,16 @@ export class SendgridService {
     public readonly options: SendGridModuleOptions,
 
     @InjectRepository(EmailOtp)
-    private readonly otpEmailRepo: Repository<EmailOtp>,
+    private readonly otpRepository: Repository<EmailOtp>,
+
+    private readonly dataSource: DataSource,
+
+    private readonly queueService: QueueService,
   ) {
     sendGrid.setApiKey(this.options.apiKey);
   }
 
-  async sendMail(
-    receiver: string,
-    subject: string,
-    templateName: string,
-    attachedData?: any,
-    html?: string,
-  ) {
+  async sendMail(sendgridDto: SendgridDto) {
     const templatePath = path.join(
       __dirname,
       '..',
@@ -37,15 +44,15 @@ export class SendgridService {
       'sendgrid',
       'src',
       'templates',
-      `${templateName}.ejs`,
+      `${sendgridDto.templateName}.ejs`,
     );
     const template = await readFile(templatePath, 'utf-8');
-    html = ejs.render(template, attachedData || {});
+    sendgridDto.html = ejs.render(template, sendgridDto.attachedData || {});
     const mail = {
       from: this.options.sender,
-      to: receiver,
-      subject: subject,
-      html: html,
+      to: sendgridDto.receiver,
+      subject: sendgridDto.subject,
+      html: sendgridDto.html,
     };
     try {
       const info = await sendGrid.send(mail);
@@ -55,42 +62,111 @@ export class SendgridService {
     }
   }
 
-  async countRecentOtps(
-    email: string,
-    minutes: number,
-    otpCategory: number,
-  ): Promise<number> {
-    const now = new Date();
-    const endtime = new Date(now.setHours(now.getHours() + 7)).toISOString();
-    // const timeLimit = new Date();
-    // timeLimit.setMinutes(timeLimit.getMinutes() - minutes); // Tính thời gian trước đây
-    /// Đếm thời gian gửi trong minutes phut
-    //10 5 11 6 12 7 13 8 14 9 15 10 16 11
-    const starttime = new Date(
-      now.setMinutes(now.getMinutes() - 5),
-    ).toISOString();
-    const count = await this.otpEmailRepo
-      .createQueryBuilder('otp')
-      .where('otp.email = :email AND otp.otp_category = :type', {
-        email,
-        type: otpCategory,
-      })
-      .andWhere('otp.createdAt >= :starttime AND otp.createdAt <= :endtime', {
-        starttime,
-        endtime,
-      })
-      .getCount();
-    return count;
+  async createOtpAndSend(
+    receiver: LiteralObject,
+    receiverType: number,
+    otpType: number,
+  ) {
+    return this.dataSource.transaction(async (transaction) => {
+      const otpRepository = transaction.getRepository(EmailOtp);
+      //check otp frequency
+      const fiveMinutesAgo = format(
+        subMinutes(new Date(), 5),
+        'yyyy-MM-dd HH:mm:ss.SSSSSS',
+      );
+      // const fiveMinutesAgo = subMinutes(new Date(), 5);
+      const maxOtpInFiveMinutes = 5;
+      const otpCountLastFiveMinutes = await otpRepository
+        .createQueryBuilder('otp')
+        .where('otp.email = :email', { email: receiver.email })
+        .andWhere('otp.created_at > :fiveMinutesAgo', {
+          fiveMinutesAgo: fiveMinutesAgo,
+        })
+        .getCount();
+      console.log(otpCountLastFiveMinutes);
+      if (otpCountLastFiveMinutes >= maxOtpInFiveMinutes) {
+        throw new Exception(ErrorCode.Too_Many_Requests);
+      }
+      //get current otp of user in data and change status
+      const result = await otpRepository
+        .createQueryBuilder()
+        .update('email_otp')
+        .set({ isCurrent: IsCurrent.IS_OLD })
+        .where('email_otp.user_email = :email', { email: receiver.email })
+        .andWhere('email_otp.user_type = :userType', { userType: receiverType })
+        .andWhere('email_otp.is_current = :isCurrent', {
+          isCurrent: IsCurrent.IS_CURRENT,
+        })
+        .andWhere('email_otp.otp_category = :otpType', { otpType: otpType })
+        .andWhere('email_otp.expired_at > :now', { now: new Date() })
+        .execute();
+
+      //create new otp
+      const otp = this.generateOtp(parseInt(process.env.RANDOM_TOKEN_LENGTH));
+      const link = this.generateLink(receiverType, otpType, otp);
+      const expiredAt = addMinutes(
+        new Date(),
+        parseInt(process.env.OTP_EXPIRY_TIME),
+      ).toISOString();
+      const newOtpRecord = await this.otpRepository.create({
+        otp: otp,
+        userId: receiver.id,
+        email: receiver.email,
+        isCurrent: IsCurrent.IS_CURRENT,
+        otpCategory: otpType,
+        expiredAt: expiredAt,
+        userType: receiverType,
+      });
+
+      await otpRepository.save(newOtpRecord);
+
+      //push to send-mail queue
+      const receiverEmail = receiver.email
+      const subject = otpType === OTPCategory.REGISTER
+              ? 'Verify Your Account'
+              : 'Reset Your Password';
+      const template = otpType === OTPCategory.REGISTER ? './verify' : './reset-password';
+
+      await this.queueService.addSendMailQueue(
+          QueueName.SEND_MAIL,
+          {
+            receiverEmail,
+            subject,
+            template,
+            link,
+          },
+      )
+      return {
+        message: 'Check your email',
+      };
+    });
   }
 
-  async generateOtp(length: number): Promise<string> {
+  public generateOtp(length: number) {
     const characters =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let otp = '';
     for (let i = 0; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * characters.length);
-      otp += characters[randomIndex];
+      otp += characters.charAt(randomIndex);
     }
     return otp;
+  }
+
+  public generateLink(receiverType: number, otpType: number, otp: string) {
+    if (receiverType === UserType.ADMIN && otpType === OTPCategory.REGISTER)
+      return process.env.VERIFY_LINK_ADMIN + `${otp}`;
+    if (
+      receiverType === UserType.ADMIN &&
+      otpType === OTPCategory.FORGET_PASSWORD
+    )
+      return process.env.RESET_LINK_ADMIN + `${otp}`;
+    if (receiverType === UserType.USER && otpType === OTPCategory.REGISTER)
+      return process.env.VERIFY_LINK_USER + `${otp}`;
+    if (
+      receiverType === UserType.USER &&
+      otpType === OTPCategory.FORGET_PASSWORD
+    )
+      return process.env.RESET_LINK_USER + `${otp}`;
   }
 }

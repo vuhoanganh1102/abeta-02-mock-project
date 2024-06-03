@@ -106,6 +106,24 @@
       "compilerOptions": {
         "tsConfigPath": "libs/onesignal/tsconfig.lib.json"
       }
+    },
+    "schedule-cron": {
+      "type": "application",
+      "root": "apps/schedule-cron",
+      "entryFile": "main",
+      "sourceRoot": "apps/schedule-cron/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/schedule-cron/tsconfig.app.json"
+      }
+    },
+    "queue": {
+      "type": "library",
+      "root": "libs/queue",
+      "entryFile": "index",
+      "sourceRoot": "libs/queue/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/queue/tsconfig.lib.json"
+      }
     }
   },
   "monorepo": true,

@@ -14,8 +14,8 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AdminGuard } from '@app/core/guards/admin.guard';
 import { AllExceptionsFilter } from '@app/core/filters/http-exception.filter';
 import { TransformResponseInterceptor } from '@app/core/interceptors/transform-res.interceptor';
-import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationModule } from './notification/notification.module';
+import {QueueModule} from "@app/queue";
 
 @Module({
   imports: [
@@ -45,7 +45,7 @@ import { NotificationModule } from './notification/notification.module';
     ManageUserModule,
     AttendanceModule,
     NotificationModule,
-    ScheduleModule.forRoot(),
+      QueueModule
   ],
   controllers: [],
   providers: [

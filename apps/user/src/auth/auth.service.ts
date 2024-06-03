@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { LoginAuthDto } from './dtos/login.dto';
 import { User } from '@app/database-type-orm/entities/User.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -30,6 +30,7 @@ export class AuthService {
     private otpRepository: Repository<EmailOtp>,
     private jwtAuthService: JwtAuthenticationService,
     private sendGridService: SendgridService,
+    private readonly dataSource: DataSource,
   ) {}
 
   public async login(loginDto: LoginAuthDto) {
@@ -58,7 +59,11 @@ export class AuthService {
     if (!user) {
       throw new Exception(ErrorCode.User_Not_Found, 'User Not Found');
     }
-    await this.sendOtp(user, OTPCategory.REGISTER);
+    await this.sendGridService.createOtpAndSend(
+      user,
+      OTPCategory.REGISTER,
+      UserType.USER,
+    );
     return {
       message: 'Check your email',
     };
@@ -114,19 +119,26 @@ export class AuthService {
   }
 
   async forgetPassword(forgetDto: ForgetPasswordDto) {
-    //check if user existed
-    const user = await this.userRepository.findOne({
-      where: {
-        email: forgetDto.email,
-      },
+    return this.dataSource.transaction(async (transaction) => {
+      const userRepository = transaction.getRepository(User);
+      //check if user existed
+      const user = await userRepository.findOne({
+        where: {
+          email: forgetDto.email,
+        },
+      });
+      if (!user) {
+        throw new Exception(ErrorCode.User_Not_Found, 'User Not Found');
+      }
+      await this.sendGridService.createOtpAndSend(
+        user,
+        OTPCategory.FORGET_PASSWORD,
+        UserType.USER,
+      );
+      return {
+        message: 'Check your email',
+      };
     });
-    if (!user) {
-      throw new Exception(ErrorCode.User_Not_Found, 'User Not Found');
-    }
-    await this.sendOtp(user, OTPCategory.FORGET_PASSWORD);
-    return {
-      message: 'Check your email',
-    };
   }
 
   async resetPassword(resetToken, resetDto: ResetPasswordDto) {
@@ -201,81 +213,5 @@ export class AuthService {
       token += characters.charAt(randomIndex);
     }
     return token;
-  }
-
-  async sendOtp(user: User, otpType: number) {
-    //check otp frequency
-    const fiveMinutesAgo = subMinutes(new Date(), 5);
-    const fiveMinutesAgoFormat = format(
-      fiveMinutesAgo,
-      'yyyy-MM-dd HH:mm:ss.SSSSSS',
-    );
-    const maxOtpInFiveMins = 5;
-    const otpCountLastFiveMins = await this.otpRepository
-      .createQueryBuilder('otp')
-      .where('otp.email = :email', { email: user.email })
-      .andWhere('otp.userType = :userType', { userType: UserType.USER })
-      .andWhere('otp.createdAt > :fiveMinutesAgoFormat', {
-        fiveMinutesAgoFormat,
-      })
-      .getCount();
-
-    if (otpCountLastFiveMins >= maxOtpInFiveMins) {
-      throw new Exception(ErrorCode.Too_Many_Requests);
-    }
-    //get current otp of user in data
-    const otpRecord = await this.otpRepository
-      .createQueryBuilder('otp')
-      .where('otp.email = :email', { email: user.email })
-      .andWhere('otp.userType = :userType', { userType: UserType.USER })
-      .andWhere('otp.isCurrent = :isCurrent', {
-        isCurrent: IsCurrent.IS_CURRENT,
-      })
-      .andWhere('otp.otpCategory = :otpType', { otpType: otpType })
-      .andWhere('otp.expiredAt > :now', { now: new Date() })
-      .getOne();
-
-    //change current status for that otp
-    if (otpRecord) {
-      otpRecord.isCurrent = IsCurrent.IS_OLD;
-      await this.otpRepository.save(otpRecord);
-    }
-
-    //create new otp
-    const otp = this.generateRandomResetToken();
-    const link =
-      otpType === OTPCategory.REGISTER
-        ? process.env.RESET_LINK + `${otp}`
-        : process.env.VERIFY_LINK + `${otp}`;
-    const expiredAt = addMinutes(
-      new Date(),
-      parseInt(process.env.OTP_EXPIRY_TIME),
-    );
-
-    const expiredAtString = format(expiredAt, 'yyyy-MM-dd HH:mm:ss');
-    const newOtpRecord = this.otpRepository.create({
-      otp: otp,
-      userId: user.id,
-      email: user.email,
-      isCurrent: IsCurrent.IS_CURRENT,
-      otpCategory: otpType,
-      expiredAt: expiredAtString,
-      userType: UserType.USER,
-    });
-
-    await this.otpRepository.save(newOtpRecord);
-
-    // send
-    await this.sendGridService.sendMail(
-      user.email,
-      otpType === OTPCategory.REGISTER
-        ? 'Verify Your Account'
-        : 'Reset Your Password',
-      otpType === OTPCategory.REGISTER ? './verify' : './reset-password',
-      { link },
-    );
-    return {
-      message: 'Check your email',
-    };
   }
 }

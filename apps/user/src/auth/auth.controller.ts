@@ -7,7 +7,7 @@ import { AuthUser } from '@app/core/decorators/authUser.decorator';
 import { ChangePasswordDto } from './dtos/changePassword.dto';
 import { ForgetPasswordDto } from './dtos/forgetPassword.dto';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
-import { refreshTokenDto } from './dtos/refreshToken.dto';
+import {RefreshTokenDto} from "./dtos/refreshToken.dto";
 
 @ApiBearerAuth()
 @ApiTags('Auth')
@@ -86,7 +86,7 @@ export class AuthController {
     summary: 'Get new tokens for authentication',
     description: 'Insert refresh token to get new access token',
   })
-  refreshToken(@Body() { refreshToken }: refreshTokenDto) {
+  refreshToken(@Body() { refreshToken }: RefreshTokenDto) {
     return this.authService.refreshTokens(refreshToken);
   }
 

@@ -53,7 +53,7 @@ export class AttendanceController {
     return this.attendanceService.getOneAttendance(id);
   }
 
-  @Get('user/:id')
+  @Get('user')
   @ApiOperation({
     summary: 'get all attendance records of a user with time filter',
     description:

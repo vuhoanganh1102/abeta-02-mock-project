@@ -37,11 +37,11 @@ export class NotificationService {
       .where('userNotification.receiverId = :id', { id })
       .andWhere('userNotification.deletedAt IS NULL');
 
-    if (isRead == 1) {
+    if (isRead === 1) {
       queryBuilder.andWhere('userNotification.isRead = :isRead', {
         isRead: ReadNotification.READ,
       });
-    } else if (isRead == 0) {
+    } else if (isRead === 0) {
       queryBuilder.andWhere('userNotification.isRead = :isRead', {
         isRead: ReadNotification.UNREAD,
       });
@@ -52,62 +52,41 @@ export class NotificationService {
     const [notifications, totalNotifications] =
       await queryBuilder.getManyAndCount();
 
-    const pagingResult = returnPaging(
-      notifications,
-      totalNotifications,
-      params,
-    );
-
-    return {
-      notifications: pagingResult,
-    };
+    return returnPaging(notifications, totalNotifications, params);
   }
 
   async delete(id: number) {
-    const notification = await this.notificationRepository.findOne({
-      where: {
+    const result = await this.notificationRepository.update(
+      {
         id: id,
         deletedAt: null,
       },
-    });
-    if (!notification) {
-      throw new Exception(ErrorCode.Notification_Not_Found);
-    }
-    return this.notificationRepository.update(
-      { id: id },
       { deletedAt: new Date().toISOString() },
     );
-  }
-  async updateReadStatus(id: number) {
-    const notification = await this.userNotificationRepository.findOne({
-      where: {
-        id: id,
-        deletedAt: null,
-      },
-    });
-    if (!notification) {
+    if (result.affected === 0) {
       throw new Exception(ErrorCode.Notification_Not_Found);
     }
-    return this.userNotificationRepository.update(
-      { id: id },
+    return result;
+  }
+  async updateReadStatus(id: number) {
+    const result = await this.userNotificationRepository.update(
+      { id },
       { isRead: ReadNotification.READ },
     );
+    if (result.affected === 0) {
+      throw new Exception(ErrorCode.Notification_Not_Found);
+    }
+    return this.userNotificationRepository.findOne({
+      where: { id },
+      select: ['id', 'receiverId', 'notificationId', 'isRead'],
+      relations: ['notification'],
+    });
   }
 
   async readAllNotification(id: number) {
-    const notifications = await this.userNotificationRepository.find({
-      where: {
-        receiverId: id,
-        deletedAt: null,
-        isRead: ReadNotification.UNREAD,
-      },
-    });
-    for (const notification of notifications) {
-      await this.userNotificationRepository.update(
-        { id: notification.id },
-        { isRead: ReadNotification.READ },
-      );
-    }
-    return notifications;
+    return this.userNotificationRepository.update(
+      { receiverId: id, isRead: ReadNotification.UNREAD },
+      { isRead: ReadNotification.READ },
+    );
   }
 }

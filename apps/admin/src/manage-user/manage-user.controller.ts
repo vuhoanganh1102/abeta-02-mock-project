@@ -7,10 +7,9 @@ import {
   Param,
   UseInterceptors,
   UploadedFile,
+  Query,
 } from '@nestjs/common';
 import { ManageUserService } from './manage-user.service';
-import { UpdateUserDto } from './dto/UpdateUser.entity';
-import { CreateUserDto } from './dto/CreateUser.entity';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -20,6 +19,10 @@ import {
 } from '@nestjs/swagger';
 import { SendgridService } from '@app/sendgrid';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { PagingDto } from './dtos/paging.dto';
+import { UserIdDto } from './dtos/userId.dto';
+import { UpdateUserDto } from './dtos/updateUser.dto';
+import { CreateUserDto } from './dtos/createUser.dto';
 
 @ApiBearerAuth()
 @ApiTags('Manage user')
@@ -34,26 +37,26 @@ export class ManageUserController {
   @ApiOperation({
     summary: 'get all users',
   })
-  async getUsers() {
-    return this.manageUserService.getUsers();
+  async getUsers(@Query() pagingDto: PagingDto) {
+    return this.manageUserService.getUsers(pagingDto);
   }
 
-  @Get('detailUser/:id')
+  @Get('detail-user/:id')
   @ApiOperation({
     summary: 'get a user detail using id',
     description: 'insert user id to see all details',
   })
-  async getDetailUser(@Param('id') id: string) {
-    return this.manageUserService.getDetailUser(parseInt(id));
+  async getDetailUser(@Param() userIdDto: UserIdDto) {
+    return this.manageUserService.getDetailUser(userIdDto);
   }
 
-  @Patch('deleteUser/:id')
+  @Patch('delete-user/:id')
   @ApiOperation({
     summary: 'admin deletes a user',
     description: 'insert user id to delete',
   })
-  async deletedUser(@Param('id') id: string) {
-    return this.manageUserService.deleteUser(parseInt(id));
+  async deletedUser(@Param() userIdDto: UserIdDto) {
+    return this.manageUserService.deleteUser(userIdDto);
   }
 
   @Patch('updateUser/:id')
@@ -61,8 +64,11 @@ export class ManageUserController {
     summary: 'admin updates user information',
     description: 'insert user id and update fields to update',
   })
-  async updateUser(@Param('id') id: string, @Body() updater: UpdateUserDto) {
-    return this.manageUserService.updateUser(parseInt(id), updater);
+  async updateUser(
+    @Param() userIdDto: UserIdDto,
+    @Body() updater: UpdateUserDto,
+  ) {
+    return this.manageUserService.updateUser(userIdDto, updater);
   }
 
   @Post('upload-user-image/:id')
@@ -85,10 +91,10 @@ export class ManageUserController {
   })
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(
-    @Param('id') id: number,
+    @Param() userIdDto: UserIdDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.manageUserService.uploadAvatar(file, id);
+    return this.manageUserService.uploadAvatar(file, userIdDto);
   }
 
   @Post('create-user')

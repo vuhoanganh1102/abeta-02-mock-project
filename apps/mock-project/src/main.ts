@@ -1,5 +1,5 @@
 import { CustomLogger } from '@app/core/logging/logging.service';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -13,6 +13,7 @@ async function bootstrap() {
 
   app.set('trust proxy', 1);
   app.useLogger(new CustomLogger());
+  app.useGlobalPipes(new ValidationPipe());
   const configService: ConfigService<IConfig> = app.get(ConfigService);
   const port = configService.get<number>('port', 3000);
 

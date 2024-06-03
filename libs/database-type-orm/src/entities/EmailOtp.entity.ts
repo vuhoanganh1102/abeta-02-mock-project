@@ -5,17 +5,16 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { IsCurrent } from '../../../core/src/constants/enum';
+import { User } from '@app/database-type-orm/entities/User.entity';
 
 @Entity('email_otp')
 export class EmailOtp {
   @PrimaryGeneratedColumn({ name: 'id', type: 'bigint', unsigned: true })
   id: number;
-
-  // @ManyToOne(() => User, (user) => user.otp)
-  // @JoinColumn({ name: 'user_id' })
-  // user: User;
 
   @Column({ name: 'user_id', type: 'bigint', unsigned: true })
   userId: number;
@@ -44,14 +43,14 @@ export class EmailOtp {
   isCurrent: number;
 
   @Column({ name: 'expired_at', type: 'datetime' })
-  expiredAt: string;
+  expiredAt: Date;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime' })
-  deletedAt: string;
+  deletedAt: Date;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt: string;
+  createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt: string;
+  updatedAt: Date;
 }

@@ -53,7 +53,8 @@ export enum ErrorCode {
   Attendance_Request_Not_Found = 'Attendance_Request_Not_Found',
   Exceeded_Time_Attendance = 'Exceeded_Time_Attendance',
   Exceeded_Time_Request = 'Exceeded_Time_Request',
-
+  Reset_Token_Invalid = 'Reset_Token_Invalid',
+  Execution_Failed = 'Execution_Failed',
   // admin
   Not_Found_Data = 'Not_Found_Data',
   Failed_Creater = 'Failed_Creater',
@@ -139,7 +140,7 @@ export enum NotificationRedirectType {
 }
 
 export enum QueueProcessor {
-  PUSH_NOTIFICATION = 'PUSH_NOTIFICATION',
+  NOTIFICATION = 'NOTIFICATION',
   SEND_MAIL = 'SEND_MAIL',
 }
 
@@ -151,8 +152,6 @@ export enum ReadNotification {
 export enum QueueName {
   SEND_MAIL = 'SEND_MAIL',
   PUSH_NOTIFICATION = 'PUSH_NOTIFICATION',
-  ADMIN_PUSH_NOTIFICATION_ALL_MEMBERS = 'ADMIN_PUSH_NOTIFICATION_ALL_MEMBERS',
-  PUSH_NOTIFICATION_WITH_PLAYER_ID = 'PUSH_NOTIFICATION_WITH_PLAYER_ID',
 }
 
 export enum VerifiedStatus {

@@ -7,6 +7,7 @@ import { JwtAuthenticationModule } from '@app/jwt-authentication';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSource } from '@app/database-type-orm/data-source';
 import { SendgridModule } from '@app/sendgrid';
+import {QueueModule} from "@app/queue";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { SendgridModule } from '@app/sendgrid';
       }),
       inject: [ConfigService],
     }),
+      QueueModule
   ],
   controllers: [AppController],
   providers: [AppService],
