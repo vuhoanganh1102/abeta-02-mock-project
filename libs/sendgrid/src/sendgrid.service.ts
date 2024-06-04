@@ -29,12 +29,18 @@ export class SendgridService {
 
     private readonly dataSource: DataSource,
 
-    private readonly queueService: QueueService,
+    // private readonly queueService: QueueService,
   ) {
     sendGrid.setApiKey(this.options.apiKey);
   }
 
-  async sendMail(sendgridDto: SendgridDto) {
+  async sendMail(
+      receiver: string,
+      subject: string,
+      templateName: string,
+      attachedData?: any,
+      html?: string,
+  ) {
     const templatePath = path.join(
       __dirname,
       '..',
@@ -44,15 +50,15 @@ export class SendgridService {
       'sendgrid',
       'src',
       'templates',
-      `${sendgridDto.templateName}.ejs`,
+      `${templateName}.ejs`,
     );
     const template = await readFile(templatePath, 'utf-8');
-    sendgridDto.html = ejs.render(template, sendgridDto.attachedData || {});
+    html = ejs.render(template, attachedData || {});
     const mail = {
       from: this.options.sender,
-      to: sendgridDto.receiver,
-      subject: sendgridDto.subject,
-      html: sendgridDto.html,
+      to: receiver,
+      subject: subject,
+      html: html,
     };
     try {
       const info = await sendGrid.send(mail);
@@ -127,17 +133,20 @@ export class SendgridService {
               : 'Reset Your Password';
       const template = otpType === OTPCategory.REGISTER ? './verify' : './reset-password';
 
-      await this.queueService.addSendMailQueue(
-          QueueName.SEND_MAIL,
-          {
-            receiverEmail,
-            subject,
-            template,
-            link,
-          },
-      )
+      // await this.queueService.addSendMailQueue(
+      //     QueueName.SEND_MAIL,
+      //     {
+      //       receiverEmail,
+      //       subject,
+      //       template,
+      //       link,
+      //     },
+      // )
       return {
-        message: 'Check your email',
+          receiverEmail,
+          subject,
+          template,
+          link,
       };
     });
   }

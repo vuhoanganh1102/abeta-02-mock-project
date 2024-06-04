@@ -12,8 +12,11 @@ export class SendMailProcessor{
 
     @Process(QueueName.SEND_MAIL)
     async handleSendMailQueue(job: Job){
-        console.log('handling sendmail job')
-        await this.sendGridService.sendMail(job.data)
+        const receiverEmail = job.data.receiverEmail
+        const subject = job.data.subject
+        const template = job.data.template
+        const link = job.data.link
+        await this.sendGridService.sendMail(receiverEmail, subject, template, link)
     }
 
     @OnQueueCompleted()

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import {forwardRef, Module} from '@nestjs/common';
 import { QueueService } from './queue.service';
 import {BullModule} from "@nestjs/bull";
 import {ConfigModule, ConfigService} from "@nestjs/config";

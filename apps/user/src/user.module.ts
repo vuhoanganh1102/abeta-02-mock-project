@@ -52,7 +52,7 @@ import {QueueModule} from "@app/queue";
     AttendanceModule,
     EmployeeModule,
     NotificationModule,
-      QueueModule
+    QueueModule
   ],
   controllers: [],
   providers: [

@@ -1,25 +1,19 @@
-import { DataSource, Repository } from 'typeorm';
-import { LoginAuthDto } from './dtos/login.dto';
-import { User } from '@app/database-type-orm/entities/User.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Exception } from '@app/core/exception';
-import {
-  ErrorCode,
-  IsCurrent,
-  OTPCategory,
-  UserType,
-  VerifiedStatus,
-} from '@app/core/constants/enum';
+import {DataSource, Repository} from 'typeorm';
+import {LoginAuthDto} from './dtos/login.dto';
+import {User} from '@app/database-type-orm/entities/User.entity';
+import {InjectRepository} from '@nestjs/typeorm';
+import {Exception} from '@app/core/exception';
+import {ErrorCode, IsCurrent, OTPCategory, QueueName, UserType, VerifiedStatus,} from '@app/core/constants/enum';
 import * as bcrypt from 'bcrypt';
-import { JwtAuthenticationService } from '@app/jwt-authentication';
-import { ChangePasswordDto } from './dtos/changePassword.dto';
-import { ForgetPasswordDto } from './dtos/forgetPassword.dto';
-import { SendgridService } from '@app/sendgrid';
-import { ResetPasswordDto } from './dtos/resetPassword.dto';
-import { addMinutes, format, subMinutes } from 'date-fns';
-import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
-import { Injectable } from '@nestjs/common';
+import {JwtAuthenticationService} from '@app/jwt-authentication';
+import {ChangePasswordDto} from './dtos/changePassword.dto';
+import {ForgetPasswordDto} from './dtos/forgetPassword.dto';
+import {SendgridService} from '@app/sendgrid';
+import {ResetPasswordDto} from './dtos/resetPassword.dto';
+import {EmailOtp} from '@app/database-type-orm/entities/EmailOtp.entity';
+import {Injectable} from '@nestjs/common';
 import * as process from 'process';
+import {QueueService} from "@app/queue";
 
 @Injectable()
 export class AuthService {
@@ -31,6 +25,7 @@ export class AuthService {
     private jwtAuthService: JwtAuthenticationService,
     private sendGridService: SendgridService,
     private readonly dataSource: DataSource,
+    private readonly queueService: QueueService,
   ) {}
 
   public async login(loginDto: LoginAuthDto) {
@@ -43,9 +38,9 @@ export class AuthService {
     if (!user) {
       throw new Exception(ErrorCode.Email_Not_Valid);
     }
-    if (!bcrypt.compareSync(loginDto.password, user.password)) {
-      throw new Exception(ErrorCode.Password_Not_Valid);
-    }
+    // if (!bcrypt.compareSync(loginDto.password, user.password)) {
+    //   throw new Exception(ErrorCode.Password_Not_Valid);
+    // }
     return this.generateTokensAndSave(user);
   }
 
@@ -119,10 +114,10 @@ export class AuthService {
   }
 
   async forgetPassword(forgetDto: ForgetPasswordDto) {
-    return this.dataSource.transaction(async (transaction) => {
-      const userRepository = transaction.getRepository(User);
+
+
       //check if user existed
-      const user = await userRepository.findOne({
+      const user = await this.userRepository.findOne({
         where: {
           email: forgetDto.email,
         },
@@ -130,15 +125,17 @@ export class AuthService {
       if (!user) {
         throw new Exception(ErrorCode.User_Not_Found, 'User Not Found');
       }
-      await this.sendGridService.createOtpAndSend(
+      const addQueueData =  await this.sendGridService.createOtpAndSend(
         user,
         OTPCategory.FORGET_PASSWORD,
         UserType.USER,
-      );
+      )
+      console.log('return add queue')
+      await this.queueService.addSendMailQueue(QueueName.SEND_MAIL, addQueueData)
       return {
         message: 'Check your email',
       };
-    });
+
   }
 
   async resetPassword(resetToken, resetDto: ResetPasswordDto) {

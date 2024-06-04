@@ -12,9 +12,8 @@ export class QueueService {
     }
 
     async addSendMailQueue(name: QueueName, data: any, options?: Bull.JobOptions){
-        await this.sendMailQueue.add(name, data, {
+        await this.sendMailQueue.add(name, {...data}, {
             ...options
         })
-        console.log('add to send mail queue successfully')
     }
 }

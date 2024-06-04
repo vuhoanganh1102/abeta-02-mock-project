@@ -45,7 +45,7 @@ import {QueueModule} from "@app/queue";
     ManageUserModule,
     AttendanceModule,
     NotificationModule,
-      QueueModule
+    QueueModule
   ],
   controllers: [],
   providers: [

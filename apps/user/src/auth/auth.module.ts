@@ -7,6 +7,7 @@ import { EmailOtp } from '@app/database-type-orm/entities/EmailOtp.entity';
 import { SendgridModule } from '@app/sendgrid/sendgrid.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { IConfig, IConfigSendGrid } from 'apps/admin/src/config';
+import {QueueModule} from "@app/queue";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { IConfig, IConfigSendGrid } from 'apps/admin/src/config';
       }),
       inject: [ConfigService],
     }),
+      QueueModule
   ],
   exports: [AuthService],
   providers: [AuthService],

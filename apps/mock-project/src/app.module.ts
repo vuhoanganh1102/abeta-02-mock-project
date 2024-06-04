@@ -41,7 +41,7 @@ import {QueueModule} from "@app/queue";
       }),
       inject: [ConfigService],
     }),
-      QueueModule
+    QueueModule
   ],
   controllers: [AppController],
   providers: [AppService],
